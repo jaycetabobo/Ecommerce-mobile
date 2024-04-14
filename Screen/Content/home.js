@@ -28,8 +28,10 @@ export default function Home({ navigation }) {
 
 const styles = StyleSheet.create({
     container: {
-        padding: 10,
-        paddingHorizontal: 30
+        flex: 1,
+        paddingHorizontal: 20,
+        justifyContent: 'center',
+        marginBottom: "50%"
     },
     textbanner: {
         fontWeight: 'bold',

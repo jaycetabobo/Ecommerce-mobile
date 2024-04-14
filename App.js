@@ -16,30 +16,30 @@ import {
 import { AntDesign } from '@expo/vector-icons';
 
 export default function App({ navigation }) {
-  const drawer = useRef(null);
-  const navigationView = () => (
-    <View style={[styles.container, styles.navigationContainer]}>
-      <Text style={styles.paragraph}><AntDesign name="closecircle" size={35} color="black" onPress={() => drawer.current.closeDrawer()} /></Text>
-      <View>
-        <Text onPress={() => navigation.navigate('Product')} >
-          asd
-        </Text>
-      </View>
-    </View>
-  );
+  // const drawer = useRef(null);
+  // const navigationView = () => (
+  //   <View style={[styles.container, styles.navigationContainer]}>
+  //     <Text style={styles.paragraph}><AntDesign name="closecircle" size={35} color="black" onPress={() => drawer.current.closeDrawer()} /></Text>
+  //     <View>
+  //       <Text onPress={() => navigation.navigate('Product')} >
+  //         asd
+  //       </Text>
+  //     </View>
+  //   </View>
+  // );
   return (
     <SafeAreaProvider>
       <PaperProvider>
         <NavigationContainer>
           <StatusBar style="auto" />
-          <DrawerLayoutAndroid
+          {/* <DrawerLayoutAndroid
             ref={drawer}
             drawerWidth={300}
             drawerPosition='left'
             renderNavigationView={navigationView}>
             <HeaderApp onPress={() => drawer.current.openDrawer()} />
-            <ContentRoutes />
-          </DrawerLayoutAndroid>
+          </DrawerLayoutAndroid> */}
+          <ContentRoutes />
         </NavigationContainer>
       </PaperProvider>
     </SafeAreaProvider>

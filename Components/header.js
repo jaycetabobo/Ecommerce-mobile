@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Header, Icon } from "@rneui/themed";
 
-export default function HeaderApp({ onPress }) {
+export default function HeaderApp({ onPress, icon, text, icon2, onPressRight }) {
     return (
         <Header
             backgroundColor="#EEEEEE"
@@ -13,11 +13,11 @@ export default function HeaderApp({ onPress }) {
             }}
             centerContainerStyle={{}}
             containerStyle={{ width: 'auto', borderBottomWidth: 1, borderBottomColor: "black" }}
-            leftComponent={{ icon: "menu", color: "black", onPress: onPress }}
+            leftComponent={{ icon: icon, color: "black", onPress: onPress }}
             leftContainerStyle={{}}
             linearGradientProps={{}}
             placement="center"
-            rightComponent={{ icon: "shopping-cart", color: "black" }}
+            rightComponent={{ icon: icon2, color: "black", text: text, onPress: onPressRight }}
             rightContainerStyle={{}}
             statusBarProps={{}}
         />
