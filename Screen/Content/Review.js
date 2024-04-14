@@ -5,6 +5,7 @@ import { Card } from "@rneui/base";
 import { CardImage } from '@rneui/base/dist/Card/Card.Image';
 import { Divider } from '@rneui/themed';
 import { Data } from '../../productstore';
+import Toast from 'react-native-toast-message'
 
 export default function Review({ route, navigation }) {
     const productId = route.params.id;
@@ -17,9 +18,19 @@ export default function Review({ route, navigation }) {
         bestFeatures: '',
         comment: ''
     })
+    const handleSubmit = () => {
+        Toast.show({
+            type: 'success',
+            text1: 'Review Posted !!',
+            autoHide: true,
+            visibilityTime: 3000
+        });
+    }
+
+
     return (
         <View>
-            <HeaderApp onPress={() => navigation.goBack()} icon='arrow-back' text='Submit' onPressRight={() => { }} />
+            <HeaderApp onPress={() => navigation.goBack()} icon='arrow-back' text='Submit' onPressRight={() => handleSubmit()} />
             {matchProduct.map((data, index) => (
                 <View key={index}>
                     <View style={styles.container}>
@@ -90,6 +101,7 @@ export default function Review({ route, navigation }) {
                     </View>
                 </View>
             ))}
+            <Toast />
         </View>
     )
 }
