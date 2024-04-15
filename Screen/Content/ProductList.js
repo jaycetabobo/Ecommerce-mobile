@@ -28,9 +28,9 @@ export default function ProductList({ navigation }) {
     const navigationView = () => (
         <View style={[styles.container, styles.navigationContainer]}>
             <Text style={styles.paragraph}><AntDesign name="closecircle" size={35} color="black" onPress={() => drawer.current.closeDrawer()} /></Text>
-            <View>
-                <Text onPress={() => navigation.navigate('Home')} >
-                    asd
+            <View style={{ marginTop: 20 }}>
+                <Text onPress={() => navigation.navigate('Wallet')} >
+                    Wallet
                 </Text>
             </View>
         </View>

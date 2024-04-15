@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, Dimensions, TextInput, ScrollView } from 'react-native'
 import React from 'react'
-import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { Entypo, Ionicons } from '@expo/vector-icons';
 import { Card } from "@rneui/base";
 import { Data } from '../../productstore';
 import { Button } from '@rneui/themed';
@@ -89,7 +89,7 @@ export default function Checkout({ navigation }) {
                             paddingLeft: 10,
                             paddingBottom: 5,
                             paddingTop: 5,
-                            marginTop: 10,
+                            marginBottom: 10,
                             backgroundColor: 'white'
                         }}
                     >
@@ -105,12 +105,34 @@ export default function Checkout({ navigation }) {
                             paddingLeft: 10,
                             paddingBottom: 5,
                             paddingTop: 5,
-                            marginTop: 10,
+                            marginBottom: 10,
                             backgroundColor: 'white'
                         }}
                     >
                         <TextInput style={{ marginLeft: 10, width: width * .80 }} placeholder='City' />
                     </View>
+                    <Text style={styles.shippingText}>
+                        Make Payment
+                    </Text>
+                    <Button
+                        title="💳  E-Wallet"
+                        loading={false}
+                        loadingProps={{ size: 'small', color: 'white' }}
+                        buttonStyle={{
+                            backgroundColor: 'white',
+                            borderRadius: 7,
+                            borderColor: "black",
+                            borderWidth: 1,
+                            padding: 0,
+                            paddingVertical: 5,
+                            marginTop: 10,
+                        }}
+                        titleStyle={{ color: "black", fontSize: 20, fontWeight: 'bold' }}
+                        containerStyle={{
+                            width: 140
+                        }}
+                    // onPress={() => { navigation.navigate("ProductList") }}
+                    />
                 </View>
             </ScrollView>
             <View>
@@ -176,6 +198,6 @@ const styles = StyleSheet.create({
     shippingInput: {
         flexDirection: 'row',
         gap: 10,
-        marginTop: 10
+        marginVertical: 10,
     }
 })
