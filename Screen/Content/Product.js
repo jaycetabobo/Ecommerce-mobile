@@ -35,11 +35,13 @@ export default function Product({ route, navigation }) {
         } else {
             navigation.navigate('Review', { id, color, size })
         }
+        setValueColor('')
+        setValueSize('')
     }
 
     return (
         <View>
-            <HeaderApp onPress={() => navigation.goBack()} icon='arrow-back' icon2='shopping-cart' />
+            <HeaderApp onPress={() => navigation.goBack()} icon='arrow-back' icon2='shopping-cart' onPressRight={() => navigation.navigate('Cart')} />
             <View style={styles.container}>
                 {matchProduct.map((data, index) => (
                     <View key={index}>

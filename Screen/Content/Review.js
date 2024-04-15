@@ -25,6 +25,7 @@ export default function Review({ route, navigation }) {
             autoHide: true,
             visibilityTime: 3000
         });
+
     }
 
 

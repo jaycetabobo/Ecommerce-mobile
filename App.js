@@ -31,7 +31,6 @@ export default function App({ navigation }) {
     <SafeAreaProvider>
       <PaperProvider>
         <NavigationContainer>
-          <StatusBar style="auto" />
           {/* <DrawerLayoutAndroid
             ref={drawer}
             drawerWidth={300}
@@ -40,6 +39,7 @@ export default function App({ navigation }) {
             <HeaderApp onPress={() => drawer.current.openDrawer()} />
           </DrawerLayoutAndroid> */}
           <ContentRoutes />
+          <StatusBar style="auto" />
         </NavigationContainer>
       </PaperProvider>
     </SafeAreaProvider>

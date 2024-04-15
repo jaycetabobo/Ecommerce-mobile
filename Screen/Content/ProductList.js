@@ -42,7 +42,7 @@ export default function ProductList({ navigation }) {
             drawerPosition='left'
             renderNavigationView={navigationView}>
             <View>
-                <HeaderApp onPress={() => drawer.current.openDrawer()} icon='menu' icon2='shopping-cart' />
+                <HeaderApp onPress={() => drawer.current.openDrawer()} icon='menu' icon2='shopping-cart' onPressRight={() => navigation.navigate('Cart')} />
                 <View style={styles.container1}>
                     <TouchableOpacity style={styles.category}>
                         <Menu

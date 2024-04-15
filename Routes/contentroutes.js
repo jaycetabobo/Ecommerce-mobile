@@ -3,6 +3,8 @@ import Home from '../Screen/Content/home';
 import ProductList from '../Screen/Content/ProductList';
 import Product from '../Screen/Content/Product';
 import Review from '../Screen/Content/Review';
+import Cart from '../Screen/Content/Cart';
+import Checkout from '../Screen/Content/Checkout';
 
 const Stack = createStackNavigator();
 
@@ -19,6 +21,12 @@ export default function ContentRoutes() {
                 headerShown: false,
             }} />
             <Stack.Screen name="Review" component={Review} options={{
+                headerShown: false,
+            }} />
+            <Stack.Screen name="Cart" component={Cart} options={{
+                headerShown: false,
+            }} />
+            <Stack.Screen name="Checkout" component={Checkout} options={{
                 headerShown: false,
             }} />
         </Stack.Navigator>
