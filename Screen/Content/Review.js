@@ -1,23 +1,30 @@
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import HeaderApp from '../../Components/header';
 import { Card } from "@rneui/base";
 import { CardImage } from '@rneui/base/dist/Card/Card.Image';
 import { Divider } from '@rneui/themed';
 import { Data } from '../../productstore';
 import Toast from 'react-native-toast-message'
+import axios from '../../axios';
+import { imagehttp } from '../../axios';
 
 export default function Review({ route, navigation }) {
+    const [data, setData] = useState();
     const productId = route.params.id;
     const productColor = route.params.color;
     const productSize = route.params.size;
-    const matchProduct = Data.filter(data => data.id === productId);
+    // const matchProduct = Data.filter(data => data.id === productId);
     const [reviewData, setReviewData] = useState({
         productQuality: '',
         performance: '',
         bestFeatures: '',
         comment: ''
     })
+    useEffect(() => {
+        axios.get(`products/${productId}`).then((response) => setData(response.data)
+        ).catch((error) => console.log(error))
+    }, []);
     const handleSubmit = () => {
         Toast.show({
             type: 'success',
@@ -32,20 +39,20 @@ export default function Review({ route, navigation }) {
     return (
         <View>
             <HeaderApp onPress={() => navigation.goBack()} icon='arrow-back' text='Submit' onPressRight={() => handleSubmit()} />
-            {matchProduct.map((data, index) => (
-                <View key={index}>
+            {data ? (
+                <View>
                     <View style={styles.container}>
                         <Card containerStyle={{ width: '20%', margin: 0 }} wrapperStyle={{}}>
                             <CardImage
                                 style={{ height: 30, }}
                                 resizeMode="contain"
-                                source={data.image}
+                                source={{ uri: `${imagehttp}${data.image}` }}
                             />
 
                         </Card>
                         <View>
                             <Text style={styles.containerText} numberOfLines={1}>
-                                {data.title}
+                                {data.product_name}
                             </Text>
                             <Text style={styles.containerText2}>
                                 Variation: {productColor} - {productSize}
@@ -101,7 +108,11 @@ export default function Review({ route, navigation }) {
                         </View>
                     </View>
                 </View>
-            ))}
+            ) : (
+                <Text>
+                    Loading product data...
+                </Text>
+            )}
             <Toast />
         </View>
     )
@@ -122,7 +133,6 @@ const styles = StyleSheet.create({
     containerText2: {
         marginLeft: 10,
         marginTop: 5,
-        width: "80%",
     },
     container2: {
         padding: 10,

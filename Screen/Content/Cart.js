@@ -12,7 +12,7 @@ export default function Cart({ navigation }) {
     return (
         <View style={styles.container}>
             <View style={styles.containerHeader}>
-                <Ionicons name="arrow-back" size={30} color="black" onPress={() => navigation.goBack()} />
+                <Ionicons name="arrow-back" size={30} color="black" onPress={() => navigation.navigate('ProductList')} />
                 <View style={{ alignItems: 'center' }}>
                     <AntDesign name="shoppingcart" size={40} color="black" />
                     <Text style={styles.containerHeaderText}>Your Shopping Carts</Text>
@@ -56,7 +56,7 @@ export default function Cart({ navigation }) {
                                 />
                             </View>
                             <Text style={styles.priceText}>
-                                Price: ${data.price}
+                                Price: ₱ {data.price}
                             </Text>
                         </View>
                     </View>
@@ -65,7 +65,7 @@ export default function Cart({ navigation }) {
             <View style={styles.containerHeader}>
                 <View style={styles.checkout}>
                     <Text style={styles.checkoutText}>Checkout</Text>
-                    <Text style={styles.checkoutText}>$10000.00</Text>
+                    <Text style={styles.checkoutText}>₱ 10000.00</Text>
                 </View>
                 <Button
                     title="Go to Checkout"

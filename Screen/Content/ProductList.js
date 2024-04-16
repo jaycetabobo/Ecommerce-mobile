@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, TouchableOpacity, Dimensions, ScrollView, DrawerLayoutAndroid, } from 'react-native'
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Card, color } from "@rneui/base";
 import { CardImage } from '@rneui/base/dist/Card/Card.Image';
 import { Data } from '../../productstore';
@@ -7,6 +7,8 @@ import { Button, ListItem } from '@rneui/themed';
 import { Menu, Checkbox } from 'react-native-paper';
 import HeaderApp from '../../Components/header';
 import { AntDesign } from '@expo/vector-icons';
+import axios from '../../axios';
+import { imagehttp } from '../../axios';
 
 const { width, height } = Dimensions.get('window')
 
@@ -24,6 +26,13 @@ export default function ProductList({ navigation }) {
     const handleProductClick = (id) => {
         navigation.navigate('Product', { id })
     }
+    const [data, setData] = useState(null);
+
+    useEffect(() => {
+        axios.get('products/').then((response) => setData(response.data)
+        ).catch((error) => console.log(error))
+    }, []);
+
     const drawer = useRef(null);
     const navigationView = () => (
         <View style={[styles.container, styles.navigationContainer]}>
@@ -108,45 +117,53 @@ export default function ProductList({ navigation }) {
                     </View>
                 </View>
                 <ScrollView style={styles.container2}>
-                    {Data.map((data, index) => (
-                        <View key={index}>
-                            <Card containerStyle={{ borderRadius: 8 }} wrapperStyle={{}}>
-                                <CardImage
-                                    style={{ width: "100%", height: 200, marginBottom: 10 }}
-                                    resizeMode="contain"
-                                    source={data.image}
-                                    onPress={() => handleProductClick(data.id)}
-                                />
-                                <View>
-                                    <Text style={styles.text2}>
-                                        {data.title}
-                                    </Text>
-                                    <Text style={styles.text3} numberOfLines={2}>
-                                        {data.description}
-                                    </Text>
-                                    <View style={styles.addcartcontainer}>
-                                        <Button
-                                            title="Add to Cart"
-                                            loading={false}
-                                            loadingProps={{ size: 'small', color: 'white' }}
-                                            buttonStyle={{
-                                                backgroundColor: 'black',
-                                                borderRadius: 7,
-                                            }}
-                                            titleStyle={{ fontWeight: 'bold' }}
-                                            containerStyle={{
-                                            }}
+                    {data ? (
+                        <View>
+                            {data.map((data, index) => (
+                                <View key={index}>
+                                    <Card containerStyle={{ borderRadius: 8 }} wrapperStyle={{}}>
+                                        <CardImage
+                                            style={{ width: "100%", height: 200, marginBottom: 10 }}
+                                            resizeMode="contain"
+                                            source={{ uri: `${imagehttp}${data.image}` }}
                                             onPress={() => handleProductClick(data.id)}
                                         />
-                                        <Text style={styles.text2}>
-                                            ${data.price}
-                                        </Text>
-                                    </View>
+                                        <View>
+                                            <Text style={styles.text2}>
+                                                {data.product_name}
+                                            </Text>
+                                            <Text style={styles.text3} numberOfLines={2}>
+                                                {data.description}
+                                            </Text>
+                                            <View style={styles.addcartcontainer}>
+                                                <Button
+                                                    title="Add to Cart"
+                                                    loading={false}
+                                                    loadingProps={{ size: 'small', color: 'white' }}
+                                                    buttonStyle={{
+                                                        backgroundColor: 'black',
+                                                        borderRadius: 7,
+                                                    }}
+                                                    titleStyle={{ fontWeight: 'bold' }}
+                                                    containerStyle={{
+                                                    }}
+                                                    onPress={() => handleProductClick(data.id)}
+                                                />
+                                                <Text style={styles.text2}>
+                                                    ₱ {data.price}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    </Card>
                                 </View>
-                            </Card>
+                            ))
+                            }
                         </View>
-                    ))}
-
+                    ) : (
+                        <Text>
+                            Loading product data...
+                        </Text>
+                    )}
                 </ScrollView>
             </View>
         </DrawerLayoutAndroid>

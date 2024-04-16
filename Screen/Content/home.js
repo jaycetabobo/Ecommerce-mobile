@@ -5,8 +5,8 @@ import { Button } from '@rneui/themed';
 export default function Home({ navigation }) {
     return (
         <View style={styles.container}>
-            <Text style={styles.textbanner}>EXPERIENCE THE HEIGHT OF FASHION WITH OUR EXQUISITE DESIGNER PIECES.</Text>
-            <Text style={styles.text}>Where style, sophistication, exclusivity is the forefront of our collection. Lorem ipsum dolor sit amet consectetur adipisicing elit. Repellat quaerat nostrum quia nam earum, libero, expedita impedit delectus provident quo eveniet.</Text>
+            <Text style={styles.textbanner}>BuynaBai: Your One-Stop Shop for Confidence.</Text>
+            <Text style={styles.text}>BuynaBai positions itself as an online store prioritizing both ease and comfort, offering a wide selection, user-friendly platform, fast delivery, and potentially curated products for a specific niche, aiming to become your trusted source for convenient and comfortable shopping.</Text>
             <View style={styles.button}>
                 <Button
                     title="Discover Our Products"

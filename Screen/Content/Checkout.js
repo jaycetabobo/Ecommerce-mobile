@@ -28,7 +28,7 @@ export default function Checkout({ navigation }) {
                                 <Text>{index + 1}. </Text>
                                 <View style={styles.ordercontainer2}>
                                     <Text>{data.title}</Text>
-                                    <Text>${data.price}</Text>
+                                    <Text>₱ {data.price}</Text>
                                 </View>
                             </View>
                         ))}
@@ -39,7 +39,7 @@ export default function Checkout({ navigation }) {
                             Total
                         </Text>
                         <Text style={styles.totalText2}>
-                            $1000
+                            ₱ 1000
                         </Text>
                     </View>
                 </Card>
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     },
     ordercontainer: {
         flexDirection: 'row',
-        width: width * .55,
+        width: width * .40,
         marginBottom: 10
     },
     ordercontainer2: {

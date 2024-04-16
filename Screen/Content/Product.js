@@ -1,22 +1,36 @@
 import { StyleSheet, Text, View, ScrollView, Dimensions } from 'react-native'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card } from "@rneui/base";
 import { CardImage } from '@rneui/base/dist/Card/Card.Image';
 import { Data, ProductReview } from '../../productstore';
 import { Button, ButtonGroup, Icon, Avatar, Rating } from '@rneui/themed';
 import { ToggleButton } from 'react-native-paper';
 import HeaderApp from '../../Components/header';
-import Toast from 'react-native-toast-message'
+import Toast from 'react-native-toast-message';
+import axios from '../../axios';
+import { imagehttp } from '../../axios';
 
 const { width, height } = Dimensions.get('window')
 
 export default function Product({ route, navigation }) {
+    const [data, setData] = useState(null);
+    const [dataReview, setDataReview] = useState(null);
     const productId = route.params.id;
-    const matchProduct = Data.filter(data => data.id === productId);
-    const matchReview = ProductReview.filter(review => review.productID === productId);
+    // const matchProduct = data.filter(data => data.id === productId);
+    const matchReview = dataReview ? dataReview.filter(review => review.product === productId) : [];
     const [valueColor, setValueColor] = useState('');
     const [valueSize, setValueSize] = useState('');
     // const [rating, setRating] = useState(0);
+
+    useEffect(() => {
+        axios.get(`products/${productId}`).then((response) => setData(response.data)
+        ).catch((error) => console.log(error))
+    }, []);
+
+    useEffect(() => {
+        axios.get('get_reviews/').then((response) => setDataReview(response.data)
+        ).catch((error) => console.log(error))
+    }, []);
     const handleReviewClick = (id, color, size) => {
         if (valueColor === '') {
             Toast.show({
@@ -41,24 +55,24 @@ export default function Product({ route, navigation }) {
 
     return (
         <View>
-            <HeaderApp onPress={() => navigation.goBack()} icon='arrow-back' icon2='shopping-cart' onPressRight={() => navigation.navigate('Cart')} />
-            <View style={styles.container}>
-                {matchProduct.map((data, index) => (
-                    <View key={index}>
+            <HeaderApp onPress={() => navigation.navigate('ProductList')} icon='arrow-back' icon2='shopping-cart' onPressRight={() => navigation.navigate('Cart')} />
+            {data ? (
+                <View style={styles.container}>
+                    <View >
                         <ScrollView style={{ height: "85%" }}>
                             <Card containerStyle={{ borderRadius: 20, margin: 50, marginTop: 20, marginBottom: 40 }} wrapperStyle={{}}>
                                 <CardImage
                                     style={{ width: "100%", height: 200, marginBottom: 10 }}
                                     resizeMode="contain"
-                                    source={data.image}
+                                    source={{ uri: `${imagehttp}${data.image}` }}
                                 />
                             </Card>
                             <View>
                                 <Text style={styles.text1}>
-                                    {data.title}
+                                    {data.product_name}
                                 </Text>
                                 <Text style={styles.text2}>
-                                    ${data.price}
+                                    ₱ {data.price}
                                 </Text>
                                 <Text style={styles.text3} >
                                     {data.description}
@@ -79,7 +93,7 @@ export default function Product({ route, navigation }) {
                                 </ToggleButton.Row>
                             </View>
                             <View style={styles.seller}>
-                                <Text style={styles.sellerText}>Seller: {data.seller}</Text>
+                                <Text style={styles.sellerText}>Seller: {data.user}</Text>
                                 <Button
                                     title="View Seller"
                                     loading={false}
@@ -95,19 +109,21 @@ export default function Product({ route, navigation }) {
                                     titleStyle={{ color: "black" }}
                                     containerStyle={{
                                     }}
-                                // onPress={() => { navigation.navigate("ProductList") }}
+                                    onPress={() => console.log(data)}
                                 />
                             </View>
-                            <View style={styles.reviewContainer}>
-                                <Text style={styles.reviewTextBanner}>
-                                    Product Reviews
-                                </Text>
-                                {matchReview.map((review) => (
-                                    <View key={review.reviewID} style={styles.reviewComment}>
-                                        <Text style={styles.reviewCommentText}>
-                                            Customer: {review.userName}
-                                        </Text>
-                                        {/* <Rating
+                            {dataReview ? (
+                                <View style={styles.reviewContainer}>
+                                    <Text style={styles.reviewTextBanner}>
+                                        Product Reviews
+                                    </Text>
+                                    {matchReview.length > 0 ? (
+                                        matchReview.map((review, index) => (
+                                            <View key={index} style={styles.reviewComment}>
+                                                <Text style={styles.reviewCommentText}>
+                                                    Customer: {review.user}
+                                                </Text>
+                                                {/* <Rating
                                         fractions={0}
                                         imageSize={70}
                                         minValue={0}
@@ -134,37 +150,45 @@ export default function Product({ route, navigation }) {
                                         style={{}}
                                         type="star"
                                     /> */}
-                                        <Text >
-                                            Variation: {review.color} - {review.size}
-                                        </Text>
-                                        <Card containerStyle={{ width: '50%', margin: 0, marginTop: 10 }} wrapperStyle={{}}>
-                                            <CardImage
-                                                style={{ height: 90, marginBottom: 10, }}
-                                                resizeMode="contain"
-                                                source={data.image}
-                                            />
-                                        </Card>
-                                        <Text style={styles.reviewCommentText2} >
-                                            Product Quality: {review.productQuality}
-                                        </Text>
-                                        <Text style={styles.reviewCommentText2}>
-                                            Performance: {review.performance}
-                                        </Text>
-                                        <Text style={styles.reviewCommentText2}>
-                                            Best Features: {review.bestFeatures}
-                                        </Text>
-                                        <Text style={styles.reviewCommentText2}>
-                                            Comments:
-                                        </Text>
-                                        <Text>
-                                            {review.comment}
-                                        </Text>
-                                        <Text style={styles.reviewCommentText2}>
-                                            {review.date} {review.time}
-                                        </Text>
-                                    </View>
-                                ))}
-                            </View>
+                                                <Text >
+                                                    Variation: {review.color} - {review.size}
+                                                </Text>
+                                                <Card containerStyle={{ width: '50%', margin: 0, marginTop: 10 }} wrapperStyle={{}}>
+                                                    <CardImage
+                                                        style={{ height: 90, marginBottom: 10, }}
+                                                        resizeMode="contain"
+                                                        source={{ uri: `${imagehttp}${data.image}` }}
+                                                    />
+                                                </Card>
+                                                <Text style={styles.reviewCommentText2} >
+                                                    Product Quality: {review.productQuality}
+                                                </Text>
+                                                <Text style={styles.reviewCommentText2}>
+                                                    Performance: {review.performance}
+                                                </Text>
+                                                <Text style={styles.reviewCommentText2}>
+                                                    Best Features: {review.bestFeatures}
+                                                </Text>
+                                                <Text style={styles.reviewCommentText2}>
+                                                    Comments:
+                                                </Text>
+                                                <Text>
+                                                    {review.review}
+                                                </Text>
+                                                <Text style={styles.reviewCommentText2}>
+                                                    {review.date} {review.time}
+                                                </Text>
+                                            </View>
+                                        ))
+                                    ) : (
+                                        <Text >No reviews available for this product.</Text>
+                                    )}
+                                </View>
+                            ) : (
+                                <Text>
+                                    Loading review data...
+                                </Text>
+                            )}
                         </ScrollView>
                         <View style={styles.addcartcontainer}>
                             <Button
@@ -199,9 +223,13 @@ export default function Product({ route, navigation }) {
                             />
                         </View>
                     </View >
-                ))
-                }
-            </View >
+
+                </View >
+            ) : (
+                <Text>
+                    Loading product data...
+                </Text>
+            )}
             <Toast />
         </View>
     )

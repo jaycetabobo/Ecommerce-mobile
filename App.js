@@ -14,6 +14,10 @@ import {
   View,
 } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
+import { Provider } from "react-redux";
+import store from './store';
+import { useSelector } from "react-redux";
+import AuthRoutes from './Routes/authRoutes';
 
 export default function App({ navigation }) {
   // const drawer = useRef(null);
@@ -27,21 +31,30 @@ export default function App({ navigation }) {
   //     </View>
   //   </View>
   // );
-  return (
-    <SafeAreaProvider>
-      <PaperProvider>
-        <NavigationContainer>
-          {/* <DrawerLayoutAndroid
+  const RootNavigation = () => {
+    const Tokens = useSelector((state) => state.auth.logInToken)
+    return (
+      <NavigationContainer>
+        {/* <DrawerLayoutAndroid
             ref={drawer}
             drawerWidth={300}
             drawerPosition='left'
             renderNavigationView={navigationView}>
             <HeaderApp onPress={() => drawer.current.openDrawer()} />
           </DrawerLayoutAndroid> */}
-          <ContentRoutes />
-          <StatusBar style="auto" />
-        </NavigationContainer>
-      </PaperProvider>
+        {Tokens === null ? <AuthRoutes /> : <ContentRoutes />}
+        <StatusBar style="auto" />
+      </NavigationContainer>
+    );
+  };
+
+  return (
+    <SafeAreaProvider>
+      <Provider store={store}>
+        <PaperProvider>
+          <RootNavigation />
+        </PaperProvider>
+      </Provider>
     </SafeAreaProvider>
   );
 }

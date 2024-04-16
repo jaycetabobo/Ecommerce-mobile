@@ -5,6 +5,7 @@ import Product from '../Screen/Content/Product';
 import Review from '../Screen/Content/Review';
 import Cart from '../Screen/Content/Cart';
 import Checkout from '../Screen/Content/Checkout';
+import Login from '../Screen/Authentication/login';
 
 const Stack = createStackNavigator();
 
