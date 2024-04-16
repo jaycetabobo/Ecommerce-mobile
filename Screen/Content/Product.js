@@ -9,6 +9,8 @@ import HeaderApp from '../../Components/header';
 import Toast from 'react-native-toast-message';
 import axios from '../../axios';
 import { imagehttp } from '../../axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { CART } from './reducer/cartSlice';
 
 const { width, height } = Dimensions.get('window')
 
@@ -20,6 +22,8 @@ export default function Product({ route, navigation }) {
     const matchReview = dataReview ? dataReview.filter(review => review.product === productId) : [];
     const [valueColor, setValueColor] = useState('');
     const [valueSize, setValueSize] = useState('');
+    const dispatch = useDispatch()
+    const cart = useSelector((state) => state.cart.cart);
     // const [rating, setRating] = useState(0);
 
     useEffect(() => {
@@ -52,6 +56,15 @@ export default function Product({ route, navigation }) {
         setValueColor('')
         setValueSize('')
     }
+    const handleAddToCart = (productID, quantity) => {
+        dispatch(CART({ productID, quantity }));
+        Toast.show({
+            type: 'success',
+            text1: 'Product Added Successfully',
+            autoHide: true,
+            visibilityTime: 3000
+        });
+    };
 
     return (
         <View>
@@ -109,7 +122,7 @@ export default function Product({ route, navigation }) {
                                     titleStyle={{ color: "black" }}
                                     containerStyle={{
                                     }}
-                                    onPress={() => console.log(data)}
+                                    onPress={() => console.log(cart)}
                                 />
                             </View>
                             {dataReview ? (
@@ -219,7 +232,7 @@ export default function Product({ route, navigation }) {
                                 titleStyle={{ fontWeight: 'bold' }}
                                 containerStyle={{
                                 }}
-                            // onPress={() => console.log(rating)}
+                                onPress={() => handleAddToCart(data.id, 1)}
                             />
                         </View>
                     </View >

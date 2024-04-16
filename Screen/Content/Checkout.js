@@ -1,13 +1,85 @@
 import { StyleSheet, Text, View, Dimensions, TextInput, ScrollView } from 'react-native'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Entypo, Ionicons } from '@expo/vector-icons';
 import { Card } from "@rneui/base";
 import { Data } from '../../productstore';
 import { Button } from '@rneui/themed';
+import { useSelector } from 'react-redux';
+import axios from '../../axios';
+import { imagehttp } from '../../axios';
+import { ToggleButton } from 'react-native-paper';
+import Toast from 'react-native-toast-message';
 
 const { width, height } = Dimensions.get('window')
 
 export default function Checkout({ navigation }) {
+    const [payment, setPayment] = useState('');
+    const cart = useSelector((state) => state.cart.cart);
+    const cartID = cart.productID;
+    const [data, setData] = useState([]);
+    const [addressData, setAddressData] = useState({
+        address: '',
+        city: ''
+    })
+    let cartTotal = 0;
+    useEffect(() => {
+        axios.get('products/').then((response) => setData(response.data)
+        ).catch((error) => console.log(error))
+    }, []);
+    const filteredProducts = data.filter((product) =>
+        cart.some((cartItem) => cartItem.productID === product.id)
+    );
+    const combinedData = filteredProducts.map((product) => {
+        const matchingCartItem = cart.find((item) => item.productID === product.id);
+        const quantity = matchingCartItem?.quantity || 0; // Use optional chaining for quantity
+        const productTotal = quantity * product.price;
+        cartTotal += productTotal; // Update cart total within the map function
+
+        return { ...product, quantity, productTotal }; // Add productTotal to combined data
+    });
+    const handleCheckout = () => {
+        if (addressData.address === '') {
+            Toast.show({
+                type: 'error',
+                text1: 'Please input an Address',
+                autoHide: true,
+                visibilityTime: 3000
+            });
+        } else if (addressData.city === '') {
+            Toast.show({
+                type: 'error',
+                text1: 'Please input a City',
+                autoHide: true,
+                visibilityTime: 3000
+            });
+        } else if (payment === '') {
+            Toast.show({
+                type: 'error',
+                text1: 'Please add a Payment',
+                autoHide: true,
+                visibilityTime: 3000
+            });
+        } else if (payment === 'GCash') {
+            Toast.show({
+                type: 'error',
+                text1: 'G Cash Payment is not Available for now. Please Select E Wallet',
+                autoHide: true,
+                visibilityTime: 3000
+            });
+        } else {
+            Toast.show({
+                type: 'success',
+                text1: 'Order Successful!!',
+                text2: 'Your E Wallet balance is deducted by the total amount',
+                autoHide: true,
+                visibilityTime: 5000
+            });
+            setTimeout(() => {
+                navigation.navigate('ProductList')
+            }, 5000); // Delay of 3 seconds (adjust as needed)
+        }
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -23,15 +95,21 @@ export default function Checkout({ navigation }) {
                             alignItems: "start"
                         }}
                     >
-                        {Data.map((data, index) => (
-                            <View key={index} style={styles.ordercontainer}>
-                                <Text>{index + 1}. </Text>
-                                <View style={styles.ordercontainer2}>
-                                    <Text>{data.title}</Text>
-                                    <Text>₱ {data.price}</Text>
+                        {combinedData.length > 0 ? (
+                            combinedData.map((data, index) => (
+                                <View key={index} style={styles.ordercontainer}>
+                                    <Text>{data.quantity} * </Text>
+                                    <View style={styles.ordercontainer2}>
+                                        <Text>{data.product_name}</Text>
+                                        <Text>₱ {data.productTotal.toFixed(2)}</Text>
+                                    </View>
                                 </View>
-                            </View>
-                        ))}
+                            ))
+                        ) : (
+                            <Text style={{ textAlign: 'center', marginVertical: 20 }}>
+                                Your cart is empty.
+                            </Text>
+                        )}
                     </View>
                     <Card.Divider />
                     <View style={styles.totalContainer}>
@@ -39,7 +117,7 @@ export default function Checkout({ navigation }) {
                             Total
                         </Text>
                         <Text style={styles.totalText2}>
-                            ₱ 1000
+                            ₱ {cartTotal.toFixed(2)}
                         </Text>
                     </View>
                 </Card>
@@ -47,37 +125,22 @@ export default function Checkout({ navigation }) {
                     <Text style={styles.shippingText}>
                         Shipping Address
                     </Text>
-                    <View style={styles.shippingInput}>
-                        <View
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                flexDirection: "row",
-                                borderWidth: 1,
-                                borderRadius: 10,
-                                paddingLeft: 10,
-                                paddingBottom: 5,
-                                paddingTop: 5,
-                                backgroundColor: 'white'
-                            }}
-                        >
-                            <TextInput style={{ marginLeft: 10, width: width * .36 }} placeholder='First Name' />
-                        </View>
-                        <View
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                flexDirection: "row",
-                                borderWidth: 1,
-                                borderRadius: 10,
-                                paddingLeft: 10,
-                                paddingBottom: 5,
-                                paddingTop: 5,
-                                backgroundColor: 'white'
-                            }}
-                        >
-                            <TextInput style={{ marginLeft: 10, width: width * .36 }} placeholder='Last Name' />
-                        </View>
+                    <View
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            flexDirection: "row",
+                            borderWidth: 1,
+                            borderRadius: 10,
+                            paddingLeft: 10,
+                            paddingBottom: 5,
+                            paddingTop: 5,
+                            marginBottom: 10,
+                            backgroundColor: 'white',
+                            marginTop: 10
+                        }}
+                    >
+                        <TextInput style={{ marginLeft: 10, width: width * .80 }} placeholder='Address' value={addressData.address} onChangeText={(text) => setAddressData({ ...addressData, address: text })} />
                     </View>
                     <View
                         style={{
@@ -93,46 +156,15 @@ export default function Checkout({ navigation }) {
                             backgroundColor: 'white'
                         }}
                     >
-                        <TextInput style={{ marginLeft: 10, width: width * .80 }} placeholder='Address' />
-                    </View>
-                    <View
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            flexDirection: "row",
-                            borderWidth: 1,
-                            borderRadius: 10,
-                            paddingLeft: 10,
-                            paddingBottom: 5,
-                            paddingTop: 5,
-                            marginBottom: 10,
-                            backgroundColor: 'white'
-                        }}
-                    >
-                        <TextInput style={{ marginLeft: 10, width: width * .80 }} placeholder='City' />
+                        <TextInput style={{ marginLeft: 10, width: width * .80 }} placeholder='City' value={addressData.city} onChangeText={(text) => setAddressData({ ...addressData, city: text })} />
                     </View>
                     <Text style={styles.shippingText}>
                         Make Payment
                     </Text>
-                    <Button
-                        title="💳  E-Wallet"
-                        loading={false}
-                        loadingProps={{ size: 'small', color: 'white' }}
-                        buttonStyle={{
-                            backgroundColor: 'white',
-                            borderRadius: 7,
-                            borderColor: "black",
-                            borderWidth: 1,
-                            padding: 0,
-                            paddingVertical: 5,
-                            marginTop: 10,
-                        }}
-                        titleStyle={{ color: "black", fontSize: 20, fontWeight: 'bold' }}
-                        containerStyle={{
-                            width: 140
-                        }}
-                    // onPress={() => { navigation.navigate("ProductList") }}
-                    />
+                    <ToggleButton.Row onValueChange={value => setPayment(value)} value={payment}>
+                        <ToggleButton icon={() => <View><Text>💳 E-Wallet</Text></View>} value="EWallet" style={{ width: 150, borderWidth: 2, borderColor: 'black', marginTop: 10 }} />
+                        <ToggleButton icon={() => <View><Text>🇬 G-Cash</Text></View>} value="GCash" style={{ width: 150, borderWidth: 2, borderColor: 'black', marginTop: 10 }} />
+                    </ToggleButton.Row>
                 </View>
             </ScrollView>
             <View>
@@ -149,9 +181,10 @@ export default function Checkout({ navigation }) {
                     containerStyle={{
                         margin: 15,
                     }}
-                    onPress={() => navigation.navigate('Checkout')}
+                    onPress={handleCheckout}
                 />
             </View>
+            <Toast />
         </View>
     )
 }

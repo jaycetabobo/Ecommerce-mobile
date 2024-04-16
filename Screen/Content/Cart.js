@@ -1,14 +1,37 @@
 import { StyleSheet, Text, View, ScrollView, Dimensions } from 'react-native';
-import React, { useState } from 'react'; // Import useState for counter state
+import React, { useState, useEffect } from 'react'; // Import useState for counter state
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { Data } from '../../productstore';
 import { Card } from "@rneui/base";
 import { CardImage } from '@rneui/base/dist/Card/Card.Image';
 import { Button } from '@rneui/themed';
+import { useSelector } from 'react-redux';
+import axios from '../../axios';
+import { imagehttp } from '../../axios';
 
 const { width, height } = Dimensions.get('window');
 
 export default function Cart({ navigation }) {
+    const cart = useSelector((state) => state.cart.cart);
+    const cartID = cart.productID;
+    const [data, setData] = useState([]);
+    let cartTotal = 0;
+
+    useEffect(() => {
+        axios.get('products/').then((response) => setData(response.data)
+        ).catch((error) => console.log(error))
+    }, []);
+    const filteredProducts = data.filter((product) =>
+        cart.some((cartItem) => cartItem.productID === product.id)
+    );
+    const combinedData = filteredProducts.map((product) => {
+        const matchingCartItem = cart.find((item) => item.productID === product.id);
+        const quantity = matchingCartItem?.quantity || 0; // Use optional chaining for quantity
+        const productTotal = quantity * product.price;
+        cartTotal += productTotal; // Update cart total within the map function
+
+        return { ...product, quantity, productTotal }; // Add productTotal to combined data
+    });
     return (
         <View style={styles.container}>
             <View style={styles.containerHeader}>
@@ -19,53 +42,59 @@ export default function Cart({ navigation }) {
                 </View>
             </View>
             <ScrollView style={styles.container2}>
-                {Data.map((data, index) => (
-                    <View style={styles.cart} key={index}>
-                        <View>
-                            <Card containerStyle={{ width: 150, margin: 0, borderRadius: 10 }} wrapperStyle={{}}>
-                                <CardImage
-                                    style={{ height: 100 }}
-                                    resizeMode="contain"
-                                    source={data.image}
-                                />
-                            </Card>
-                        </View>
-                        <View style={styles.cartTextContainer}>
-                            <Text style={styles.cartText}>{data.title}</Text>
-                            {/* Counter and price section */}
-                            <View style={styles.counterContainer}>
-                                <Text>
-                                    Quantity:
-                                </Text>
-                                <AntDesign
-                                    name="minuscircle"
-                                    size={24}
-                                    color="black"
-                                    // Handle decrement button press
-                                    onPress={() => { /* Handle decrement logic here */ }}
-                                    style={{ marginLeft: 10 }}
-                                />
-                                {/* Add state variable for counter */}
-                                <Text style={styles.counterText}>1</Text>
-                                <AntDesign
-                                    name="pluscircle"
-                                    size={24}
-                                    color="black"
-                                    // Handle increment button press
-                                    onPress={() => { /* Handle increment logic here */ }}
-                                />
+                {combinedData.length > 0 ? (
+                    combinedData.map((data, index) => (
+                        <View style={styles.cart} key={index}>
+                            <View>
+                                <Card containerStyle={{ width: 150, margin: 0, borderRadius: 10 }} wrapperStyle={{}}>
+                                    <CardImage
+                                        style={{ height: 100 }}
+                                        resizeMode="contain"
+                                        source={{ uri: `${imagehttp}${data.image}` }}
+                                    />
+                                </Card>
                             </View>
-                            <Text style={styles.priceText}>
-                                Price: ₱ {data.price}
-                            </Text>
+                            <View style={styles.cartTextContainer}>
+                                <Text style={styles.cartText}>{data.product_name}</Text>
+                                {/* Counter and price section */}
+                                <View style={styles.counterContainer} key={index}>
+                                    <Text>
+                                        Quantity:
+                                    </Text>
+                                    <AntDesign
+                                        name="minuscircle"
+                                        size={24}
+                                        color="black"
+                                        // Handle decrement button press
+                                        onPress={() => { /* Handle decrement logic here */ }}
+                                        style={{ marginLeft: 10 }}
+                                    />
+                                    {/* Add state variable for counter */}
+                                    <Text style={styles.counterText}>{data.quantity}</Text>
+                                    <AntDesign
+                                        name="pluscircle"
+                                        size={24}
+                                        color="black"
+                                        // Handle increment button press
+                                        onPress={() => { /* Handle increment logic here */ }}
+                                    />
+                                </View>
+                                <Text style={styles.priceText}>
+                                    Price: ₱ {data.price}
+                                </Text>
+                            </View>
                         </View>
-                    </View>
-                ))}
+                    ))
+                ) : (
+                    <Text style={{ textAlign: 'center', marginVertical: 20 }}>
+                        Your cart is empty.
+                    </Text>
+                )}
             </ScrollView>
             <View style={styles.containerHeader}>
                 <View style={styles.checkout}>
                     <Text style={styles.checkoutText}>Checkout</Text>
-                    <Text style={styles.checkoutText}>₱ 10000.00</Text>
+                    <Text style={styles.checkoutText}>₱ {cartTotal.toFixed(2)}</Text>
                 </View>
                 <Button
                     title="Go to Checkout"
