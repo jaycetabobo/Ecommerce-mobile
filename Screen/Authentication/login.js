@@ -101,7 +101,7 @@ export default function Login({ navigation, route }) {
                                 source={require("../../assets/2.png")}
                                 style={{ width: 25, height: 25 }}
                             />
-                            <TextInput style={{ marginLeft: 10, width: 300 }} placeholder='Input your username' onChangeText={(text) => setLoginData({ ...loginData, email: text })}>
+                            <TextInput style={{ marginLeft: 10, width: 300 }} placeholder='Input your email' onChangeText={(text) => setLoginData({ ...loginData, email: text })}>
                             </TextInput>
                         </View>
                     </View>

@@ -20,7 +20,7 @@ export default function Product({ route, navigation }) {
     const productId = route.params.id;
     // const matchProduct = data.filter(data => data.id === productId);
     const matchReview = dataReview ? dataReview.filter(review => review.product === productId) : [];
-    const [valueColor, setValueColor] = useState('');
+    // const [valueColor, setValueColor] = useState('');
     const [valueSize, setValueSize] = useState('');
     const dispatch = useDispatch()
     const cart = useSelector((state) => state.cart.cart);
@@ -35,15 +35,8 @@ export default function Product({ route, navigation }) {
         axios.get('get_reviews/').then((response) => setDataReview(response.data)
         ).catch((error) => console.log(error))
     }, []);
-    const handleReviewClick = (id, color, size) => {
-        if (valueColor === '') {
-            Toast.show({
-                type: 'error',
-                text1: 'Please select a Color for the Product',
-                autoHide: true,
-                visibilityTime: 3000
-            });
-        } else if (valueSize === '') {
+    const handleReviewClick = (id, size) => {
+        if (valueSize === '') {
             Toast.show({
                 type: 'error',
                 text1: 'Please select a Size for the Product',
@@ -51,19 +44,28 @@ export default function Product({ route, navigation }) {
                 visibilityTime: 3000
             });
         } else {
-            navigation.navigate('Review', { id, color, size })
+            navigation.navigate('Review', { id, size })
         }
-        setValueColor('')
         setValueSize('')
     }
-    const handleAddToCart = (productID, quantity) => {
-        dispatch(CART({ productID, quantity }));
-        Toast.show({
-            type: 'success',
-            text1: 'Product Added Successfully',
-            autoHide: true,
-            visibilityTime: 3000
-        });
+    const handleAddToCart = (productID, quantity, size) => {
+        if (valueSize === '') {
+            Toast.show({
+                type: 'error',
+                text1: 'Please select a Size for the Product',
+                autoHide: true,
+                visibilityTime: 3000
+            });
+        } else {
+            dispatch(CART({ productID, quantity, size }));
+            Toast.show({
+                type: 'success',
+                text1: 'Product Added Successfully',
+                autoHide: true,
+                visibilityTime: 3000
+            });
+        }
+        setValueSize('')
     };
 
     return (
@@ -90,24 +92,23 @@ export default function Product({ route, navigation }) {
                                 <Text style={styles.text3} >
                                     {data.description}
                                 </Text>
-                                <Text style={styles.text4}>Color:</Text>
+                                {/* <Text style={styles.text4}>Color:</Text>
                                 <ToggleButton.Row onValueChange={value => setValueColor(value)} value={valueColor}>
                                     <ToggleButton icon="circle" value="Black" iconColor='black' style={{ width: 80 }} />
                                     <ToggleButton icon="circle" value="White" iconColor='white' style={{ width: 80 }} />
                                     <ToggleButton icon="circle" value="Green" iconColor='green' style={{ width: 80 }} />
                                     <ToggleButton icon="circle" value="Blue" iconColor='blue' style={{ width: 80 }} />
-                                </ToggleButton.Row>
+                                </ToggleButton.Row> */}
                                 <Text style={styles.text4}>Size:</Text>
                                 <ToggleButton.Row onValueChange={value => setValueSize(value)} value={valueSize}>
                                     <ToggleButton icon={() => <View><Text>Small</Text></View>} value="Small" style={{ width: 80 }} />
                                     <ToggleButton icon={() => <View><Text>Medium</Text></View>} value="Medium" style={{ width: 80 }} />
                                     <ToggleButton icon={() => <View><Text>Large</Text></View>} value="Large" style={{ width: 80 }} />
-                                    <ToggleButton icon={() => <View><Text>Extra-Large</Text></View>} value="Extra-Large" style={{ width: 80 }} />
                                 </ToggleButton.Row>
                             </View>
                             <View style={styles.seller}>
                                 <Text style={styles.sellerText}>Seller: {data.user}</Text>
-                                <Button
+                                {/* <Button
                                     title="View Seller"
                                     loading={false}
                                     loadingProps={{ size: 'small', color: 'white' }}
@@ -123,7 +124,7 @@ export default function Product({ route, navigation }) {
                                     containerStyle={{
                                     }}
                                     onPress={() => console.log(cart)}
-                                />
+                                /> */}
                             </View>
                             {dataReview ? (
                                 <View style={styles.reviewContainer}>
@@ -219,7 +220,7 @@ export default function Product({ route, navigation }) {
                                 titleStyle={{ color: 'black' }}
                                 containerStyle={{
                                 }}
-                                onPress={() => handleReviewClick(data.id, valueColor, valueSize)}
+                                onPress={() => handleReviewClick(data.id, valueSize)}
                             />
                             <Button
                                 title="Add to Cart"
@@ -232,7 +233,7 @@ export default function Product({ route, navigation }) {
                                 titleStyle={{ fontWeight: 'bold' }}
                                 containerStyle={{
                                 }}
-                                onPress={() => handleAddToCart(data.id, 1)}
+                                onPress={() => handleAddToCart(data.id, 1, valueSize)}
                             />
                         </View>
                     </View >

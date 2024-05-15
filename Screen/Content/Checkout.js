@@ -31,11 +31,12 @@ export default function Checkout({ navigation }) {
     );
     const combinedData = filteredProducts.map((product) => {
         const matchingCartItem = cart.find((item) => item.productID === product.id);
+        const size = matchingCartItem.size
         const quantity = matchingCartItem?.quantity || 0; // Use optional chaining for quantity
         const productTotal = quantity * product.price;
         cartTotal += productTotal; // Update cart total within the map function
 
-        return { ...product, quantity, productTotal }; // Add productTotal to combined data
+        return { ...product, quantity, productTotal, size }; // Add productTotal to combined data
     });
     const handleCheckout = () => {
         if (addressData.address === '') {
@@ -101,6 +102,7 @@ export default function Checkout({ navigation }) {
                                     <Text>{data.quantity} * </Text>
                                     <View style={styles.ordercontainer2}>
                                         <Text>{data.product_name}</Text>
+                                        <Text>{data.size}</Text>
                                         <Text>₱ {data.productTotal.toFixed(2)}</Text>
                                     </View>
                                 </View>

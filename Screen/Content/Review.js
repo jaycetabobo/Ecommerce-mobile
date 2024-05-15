@@ -12,7 +12,6 @@ import { imagehttp } from '../../axios';
 export default function Review({ route, navigation }) {
     const [data, setData] = useState();
     const productId = route.params.id;
-    const productColor = route.params.color;
     const productSize = route.params.size;
     // const matchProduct = Data.filter(data => data.id === productId);
     const [reviewData, setReviewData] = useState({
@@ -55,17 +54,17 @@ export default function Review({ route, navigation }) {
                                 {data.product_name}
                             </Text>
                             <Text style={styles.containerText2}>
-                                Variation: {productColor} - {productSize}
+                                Variation: {productSize}
                             </Text>
                         </View>
                     </View>
                     <Divider />
                     <View style={styles.container2}>
-                        <TouchableOpacity style={styles.reviewImage}>
+                        {/* <TouchableOpacity style={styles.reviewImage}>
                             <Text>
                                 upload image
                             </Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                         <View style={styles.inputContainer}>
                             <View style={styles.inputContainer2}>
                                 <Text>Product Quality:</Text>

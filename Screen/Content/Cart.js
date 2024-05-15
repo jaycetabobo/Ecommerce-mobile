@@ -26,16 +26,17 @@ export default function Cart({ navigation }) {
     );
     const combinedData = filteredProducts.map((product) => {
         const matchingCartItem = cart.find((item) => item.productID === product.id);
+        const size = matchingCartItem.size
         const quantity = matchingCartItem?.quantity || 0; // Use optional chaining for quantity
         const productTotal = quantity * product.price;
         cartTotal += productTotal; // Update cart total within the map function
 
-        return { ...product, quantity, productTotal }; // Add productTotal to combined data
+        return { ...product, quantity, productTotal, size }; // Add productTotal to combined data
     });
     return (
         <View style={styles.container}>
             <View style={styles.containerHeader}>
-                <Ionicons name="arrow-back" size={30} color="black" onPress={() => navigation.navigate('ProductList')} />
+                <Ionicons name="arrow-back" size={30} color="black" onPress={() => navigation.goBack()} />
                 <View style={{ alignItems: 'center' }}>
                     <AntDesign name="shoppingcart" size={40} color="black" />
                     <Text style={styles.containerHeaderText}>Your Shopping Carts</Text>
@@ -56,6 +57,7 @@ export default function Cart({ navigation }) {
                             </View>
                             <View style={styles.cartTextContainer}>
                                 <Text style={styles.cartText}>{data.product_name}</Text>
+                                <Text style={styles.cartText}>Size: {data.size}</Text>
                                 {/* Counter and price section */}
                                 <View style={styles.counterContainer} key={index}>
                                     <Text>

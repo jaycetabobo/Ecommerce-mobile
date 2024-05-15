@@ -6,6 +6,9 @@ import Review from '../Screen/Content/Review';
 import Cart from '../Screen/Content/Cart';
 import Checkout from '../Screen/Content/Checkout';
 import Login from '../Screen/Authentication/login';
+import Profile from '../Screen/Content/Profile';
+import Ewallet from '../Screen/Content/Ewallet';
+import Ewallet2 from '../Screen/Content/Ewallet2';
 
 const Stack = createStackNavigator();
 
@@ -28,6 +31,15 @@ export default function ContentRoutes() {
                 headerShown: false,
             }} />
             <Stack.Screen name="Checkout" component={Checkout} options={{
+                headerShown: false,
+            }} />
+            <Stack.Screen name="Profile" component={Profile} options={{
+                headerShown: false,
+            }} />
+            <Stack.Screen name="Ewallet" component={Ewallet} options={{
+                headerShown: false,
+            }} />
+            <Stack.Screen name="Ewallet2" component={Ewallet2} options={{
                 headerShown: false,
             }} />
         </Stack.Navigator>
