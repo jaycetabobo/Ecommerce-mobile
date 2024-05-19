@@ -15,7 +15,9 @@ export default function Profile({ navigation }) {
             headers: {
                 'Authorization': `Token ${Tokens}`
             }
-        }).then((response) => setData(response.data)
+        }).then((response) => {
+            setData(response.data)
+        }
         ).catch(
 
         )

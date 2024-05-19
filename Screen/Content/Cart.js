@@ -1,38 +1,119 @@
-import { StyleSheet, Text, View, ScrollView, Dimensions } from 'react-native';
-import React, { useState, useEffect } from 'react'; // Import useState for counter state
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, Dimensions, RefreshControl } from 'react-native';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
-import { Data } from '../../productstore';
-import { Card } from "@rneui/base";
-import { CardImage } from '@rneui/base/dist/Card/Card.Image';
-import { Button } from '@rneui/themed';
+import { Card, Button } from '@rneui/themed';
 import { useSelector } from 'react-redux';
 import axios from '../../axios';
-import { imagehttp } from '../../axios';
+import Toast from 'react-native-toast-message';
 
 const { width, height } = Dimensions.get('window');
 
 export default function Cart({ navigation }) {
-    const cart = useSelector((state) => state.cart.cart);
-    const cartID = cart.productID;
-    const [data, setData] = useState([]);
+    const [productData, setData] = useState(null);
+    const [userData, setUserData] = useState(null);
+    const [carts, setCarts] = useState(null);
+    const Tokens = useSelector((state) => state.auth.logInToken);
+    const userid = userData ? userData.id : '';
+    const [refreshing, setRefreshing] = useState(false);
     let cartTotal = 0;
 
     useEffect(() => {
-        axios.get('products/').then((response) => setData(response.data)
-        ).catch((error) => console.log(error))
-    }, []);
-    const filteredProducts = data.filter((product) =>
-        cart.some((cartItem) => cartItem.productID === product.id)
-    );
-    const combinedData = filteredProducts.map((product) => {
-        const matchingCartItem = cart.find((item) => item.productID === product.id);
-        const size = matchingCartItem.size
-        const quantity = matchingCartItem?.quantity || 0; // Use optional chaining for quantity
-        const productTotal = quantity * product.price;
-        cartTotal += productTotal; // Update cart total within the map function
+        axios.get('auth/users/me/', {
+            headers: { 'Authorization': `Token ${Tokens}` }
+        }).then(response => setUserData(response.data))
+            .catch(error => console.log(error));
+    }, [Tokens]);
 
-        return { ...product, quantity, productTotal, size }; // Add productTotal to combined data
-    });
+    useEffect(() => {
+        axios.get('products/')
+            .then(response => setData(response.data))
+            .catch(error => console.log(error));
+    }, []);
+
+    const getCarts = () => {
+        axios.get('carts/')
+            .then(response => setCarts(response.data))
+            .catch(error => console.log(error));
+    };
+
+    useEffect(() => {
+        getCarts();
+    }, []);
+
+    const onRefresh = React.useCallback(() => {
+        setRefreshing(true);
+        setTimeout(() => {
+            getCarts();
+            setRefreshing(false);
+        }, 1000);
+    }, []);
+
+    const handleDelete = (cartId) => {
+        axios.delete(`carts/${cartId}/`)
+            .then(() => {
+                getCarts();
+            })
+            .catch(error => console.log(error));
+    };
+
+    const handleIncrement = (cartItem, size, productItem) => {
+        let stock;
+        if (size === 'Small') {
+            stock = productItem.stock_small_size;
+        } else if (size === 'Medium') {
+            stock = productItem.stock_medium_size;
+        } else if (size === 'Large') {
+            stock = productItem.stock_large_size;
+        }
+        if (cartItem.quantity < stock) {
+            const updatedQuantity = cartItem.quantity + 1;
+            updateCartQuantity(cartItem.id, updatedQuantity);
+        } else {
+            Toast.show({
+                type: 'error',
+                text1: `stock limit of ${size} is reached`,
+                autoHide: true,
+                visibilityTime: 3000
+            });
+        }
+    };
+
+    const handleDecrement = (cartItem, size, productItem) => {
+        let stock;
+        if (size === 'Small') {
+            stock = productItem.stock_small_size;
+        } else if (size === 'Medium') {
+            stock = productItem.stock_medium_size;
+        } else if (size === 'Large') {
+            stock = productItem.stock_large_size;
+        }
+        if (cartItem.quantity > 1) {
+            const updatedQuantity = cartItem.quantity - 1;
+            updateCartQuantity(cartItem.id, updatedQuantity);
+        } else {
+            Toast.show({
+                type: 'error',
+                text1: `stock limit of ${size} is reached`,
+                autoHide: true,
+                visibilityTime: 3000
+            });
+        }
+    };
+
+    const updateCartQuantity = (cartId, quantity) => {
+        axios.patch(`carts/${cartId}/`, { quantity })
+            .then(() => {
+                getCarts();
+            })
+            .catch(error => console.log(error));
+    };
+
+    const filteredCarts = carts ? carts.filter(cart => cart.user === userid) : [];
+
+    const handleCheckoutCart = (carts, totalAmount) => {
+        navigation.navigate('Checkout', { carts, totalAmount, userid });
+    };
+
     return (
         <View style={styles.container}>
             <View style={styles.containerHeader}>
@@ -42,55 +123,72 @@ export default function Cart({ navigation }) {
                     <Text style={styles.containerHeaderText}>Your Shopping Carts</Text>
                 </View>
             </View>
-            <ScrollView style={styles.container2}>
-                {combinedData.length > 0 ? (
-                    combinedData.map((data, index) => (
-                        <View style={styles.cart} key={index}>
-                            <View>
-                                <Card containerStyle={{ width: 150, margin: 0, borderRadius: 10 }} wrapperStyle={{}}>
-                                    <CardImage
-                                        style={{ height: 100 }}
-                                        resizeMode="contain"
-                                        source={{ uri: `${imagehttp}${data.image}` }}
-                                    />
-                                </Card>
-                            </View>
-                            <View style={styles.cartTextContainer}>
-                                <Text style={styles.cartText}>{data.product_name}</Text>
-                                <Text style={styles.cartText}>Size: {data.size}</Text>
-                                {/* Counter and price section */}
-                                <View style={styles.counterContainer} key={index}>
-                                    <Text>
-                                        Quantity:
-                                    </Text>
-                                    <AntDesign
-                                        name="minuscircle"
-                                        size={24}
-                                        color="black"
-                                        // Handle decrement button press
-                                        onPress={() => { /* Handle decrement logic here */ }}
-                                        style={{ marginLeft: 10 }}
-                                    />
-                                    {/* Add state variable for counter */}
-                                    <Text style={styles.counterText}>{data.quantity}</Text>
-                                    <AntDesign
-                                        name="pluscircle"
-                                        size={24}
-                                        color="black"
-                                        // Handle increment button press
-                                        onPress={() => { /* Handle increment logic here */ }}
-                                    />
-                                </View>
-                                <Text style={styles.priceText}>
-                                    Price: ₱ {data.price}
-                                </Text>
-                            </View>
+            <ScrollView style={styles.container2} refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }>
+                {filteredCarts.length > 0 ? (
+                    filteredCarts.map((data, index) => (
+                        <View key={index}>
+                            {productData ? (
+                                productData
+                                    .filter(product => product.id === data.product)
+                                    .map((productData) => {
+                                        cartTotal += data.quantity * productData.price;
+                                        return (
+                                            <View style={styles.cart} key={productData.id}>
+                                                <View>
+                                                    <Card containerStyle={{ width: 150, margin: 0, borderRadius: 10 }} wrapperStyle={{}}>
+                                                        {/* Uncomment the following lines if you want to show the product image */}
+                                                        {/* <Card.Image
+                                                          style={{ height: 100 }}
+                                                          resizeMode="contain"
+                                                          source={{ uri: `${imagehttp}${data.image}` }}
+                                                        /> */}
+                                                    </Card>
+                                                </View>
+                                                <View style={styles.cartTextContainer}>
+                                                    <Text style={styles.cartText}>{productData.product_name}</Text>
+                                                    <Text style={styles.cartText}>Size: {data.size}</Text>
+                                                    <View style={styles.counterContainer}>
+                                                        <Text>Quantity:</Text>
+                                                        <AntDesign
+                                                            name="minuscircle"
+                                                            size={24}
+                                                            color="black"
+                                                            onPress={() => handleDecrement(data, data.size, productData)}
+                                                            style={{ marginLeft: 10 }}
+                                                        />
+                                                        <Text style={styles.counterText}>{data.quantity}</Text>
+                                                        <AntDesign
+                                                            name="pluscircle"
+                                                            size={24}
+                                                            color="black"
+                                                            onPress={() => handleIncrement(data, data.size, productData)}
+                                                        />
+                                                    </View>
+                                                    <Text style={styles.priceText}>Price: ₱ {productData.price}</Text>
+                                                    <Button
+                                                        title="Delete"
+                                                        onPress={() => handleDelete(data.id)}
+                                                        buttonStyle={{
+                                                            backgroundColor: 'black',
+                                                            borderRadius: 7,
+                                                            marginTop: 10,
+                                                            marginBottom: 15
+                                                        }}
+                                                        titleStyle={{ fontWeight: 'bold' }}
+                                                    />
+                                                </View>
+                                            </View>
+                                        );
+                                    })
+                            ) : (
+                                <Text>Loading product data...</Text>
+                            )}
                         </View>
                     ))
                 ) : (
-                    <Text style={{ textAlign: 'center', marginVertical: 20 }}>
-                        Your cart is empty.
-                    </Text>
+                    <Text style={{ textAlign: 'center', marginVertical: 20 }}>Your cart is empty.</Text>
                 )}
             </ScrollView>
             <View style={styles.containerHeader}>
@@ -101,18 +199,13 @@ export default function Cart({ navigation }) {
                 <Button
                     title="Go to Checkout"
                     loading={false}
-                    loadingProps={{ size: 'small', color: 'white' }}
-                    buttonStyle={{
-                        backgroundColor: 'black',
-                        borderRadius: 7,
-                    }}
+                    buttonStyle={{ backgroundColor: 'black', borderRadius: 7 }}
                     titleStyle={{ fontWeight: 'bold' }}
-                    containerStyle={{
-                        marginBottom: 15
-                    }}
-                    onPress={() => navigation.navigate('Checkout')}
+                    containerStyle={{ marginBottom: 15 }}
+                    onPress={() => handleCheckoutCart(filteredCarts, cartTotal)} // Fix here
                 />
             </View>
+            <Toast />
         </View>
     );
 }
@@ -146,7 +239,7 @@ const styles = StyleSheet.create({
     },
     cartText: {
         fontSize: 15,
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     },
     counterContainer: {
         flexDirection: 'row',
@@ -165,10 +258,10 @@ const styles = StyleSheet.create({
         marginVertical: 10,
         marginBottom: 15,
         alignItems: 'center',
-        gap: 180
+        gap: 180,
     },
     checkoutText: {
         fontSize: 20,
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     },
 });

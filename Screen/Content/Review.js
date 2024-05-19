@@ -11,7 +11,8 @@ import { imagehttp } from '../../axios';
 
 export default function Review({ route, navigation }) {
     const [data, setData] = useState();
-    const productId = route.params.id;
+    const productId = route.params.productid;
+    const userId = route.params.userid
     const productSize = route.params.size;
     // const matchProduct = Data.filter(data => data.id === productId);
     const [reviewData, setReviewData] = useState({
@@ -25,12 +26,64 @@ export default function Review({ route, navigation }) {
         ).catch((error) => console.log(error))
     }, []);
     const handleSubmit = () => {
-        Toast.show({
-            type: 'success',
-            text1: 'Review Posted !!',
-            autoHide: true,
-            visibilityTime: 3000
-        });
+
+        if (reviewData.productQuality === '') {
+            Toast.show({
+                type: 'error',
+                text1: 'Missing Product Quality',
+                autoHide: true,
+                visibilityTime: 3000
+            });
+        } else if (reviewData.performance === '') {
+            Toast.show({
+                type: 'error',
+                text1: 'Missing Performance',
+                autoHide: true,
+                visibilityTime: 3000
+            });
+        } else if (reviewData.bestFeatures === '') {
+            Toast.show({
+                type: 'error',
+                text1: 'Missing bestFeatures',
+                autoHide: true,
+                visibilityTime: 3000
+            });
+        } else if (reviewData.comment === '') {
+            Toast.show({
+                type: 'error',
+                text1: 'Missing comment',
+                autoHide: true,
+                visibilityTime: 3000
+            });
+        } else {
+            axios.post('reviews/', {
+                review: reviewData.comment,
+                variation: productSize,
+                productQuality: reviewData.productQuality,
+                performance: reviewData.performance,
+                bestFeatures: reviewData.bestFeatures,
+                product: productId,
+                user: userId
+            })
+                .then((response) => {
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Review Posted !!',
+                        autoHide: true,
+                        visibilityTime: 3000
+                    });
+                    setReviewData({
+                        ...reviewData, productQuality: '',
+                        performance: '',
+                        bestFeatures: '',
+                        comment: ''
+                    })
+                })
+                .catch((error) => {
+                    console.error('Error creating cart item:', error);
+                    // Handle error appropriately, e.g., display an error message to the user
+                });
+        }
 
     }
 

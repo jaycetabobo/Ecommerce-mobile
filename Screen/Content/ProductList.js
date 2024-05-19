@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, ScrollView, Alert, Modal, Pressable } from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity, Dimensions, ScrollView, Alert, Modal, Pressable, RefreshControl } from 'react-native'
 import React, { useState, useRef, useEffect } from 'react'
 import { Card, color } from "@rneui/base";
 import { CardImage } from '@rneui/base/dist/Card/Card.Image';
@@ -29,10 +29,22 @@ export default function ProductList({ navigation }) {
     }
     const [data, setData] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const [refreshing, setRefreshing] = React.useState(false);
+
+    const onRefresh = React.useCallback(() => {
+        setRefreshing(true);
+        setTimeout(() => {
+            axios.get('products/').then((response) => setData(response.data)
+            ).catch((error) => console.log(error))
+            // console.log(data)
+            setRefreshing(false);
+        }, 1000);
+    }, []);
 
     useEffect(() => {
         axios.get('products/').then((response) => setData(response.data)
         ).catch((error) => console.log(error))
+        // console.log(data)
     }, []);
     const handleProfile = () => {
         navigation.navigate('Profile')
@@ -138,7 +150,9 @@ export default function ProductList({ navigation }) {
                     </TouchableOpacity>
                 </View>
             </View>
-            <ScrollView style={styles.container2}>
+            <ScrollView style={styles.container2} refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }>
                 {data ? (
                     <View>
                         {data.map((data, index) => (

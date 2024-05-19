@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ScrollView, Dimensions } from 'react-native'
+import { StyleSheet, Text, View, ScrollView, Dimensions, RefreshControl } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { Card } from "@rneui/base";
 import { CardImage } from '@rneui/base/dist/Card/Card.Image';
@@ -15,16 +15,41 @@ import { CART } from './reducer/cartSlice';
 const { width, height } = Dimensions.get('window')
 
 export default function Product({ route, navigation }) {
+    const [userData, setUserData] = useState(null);
     const [data, setData] = useState(null);
     const [dataReview, setDataReview] = useState(null);
+    const [carts, setCarts] = useState(null)
     const productId = route.params.id;
     // const matchProduct = data.filter(data => data.id === productId);
-    const matchReview = dataReview ? dataReview.filter(review => review.product === productId) : [];
-    // const [valueColor, setValueColor] = useState('');
+    const matchReview = dataReview ? dataReview.filter(review => review.product.id === productId) : [];
     const [valueSize, setValueSize] = useState('');
-    const dispatch = useDispatch()
-    const cart = useSelector((state) => state.cart.cart);
-    // const [rating, setRating] = useState(0);
+    // const dispatch = useDispatch()
+    const Tokens = useSelector((state) => state.auth.logInToken)
+    const [refreshing, setRefreshing] = React.useState(false);
+
+    const onRefresh = React.useCallback(() => {
+        setRefreshing(true);
+        setTimeout(() => {
+            axios.get('reviews/').then((response) => setDataReview(response.data)
+            ).catch((error) => console.log(error))
+            // console.log(data)
+            setRefreshing(false);
+        }, 1000);
+    }, []);
+
+    useEffect(() => {
+        axios.get('auth/users/me/', {
+            headers: {
+                'Authorization': `Token ${Tokens}`
+            }
+        }).then((response) => {
+            setUserData(response.data)
+        }
+        ).catch((error) =>
+            console.log(error)
+
+        )
+    }, [Tokens]);
 
     useEffect(() => {
         axios.get(`products/${productId}`).then((response) => setData(response.data)
@@ -32,10 +57,20 @@ export default function Product({ route, navigation }) {
     }, []);
 
     useEffect(() => {
-        axios.get('get_reviews/').then((response) => setDataReview(response.data)
+        axios.get('reviews/').then((response) => setDataReview(response.data)
         ).catch((error) => console.log(error))
     }, []);
-    const handleReviewClick = (id, size) => {
+
+    const getCarts = async () => {
+        await axios.get('carts/').then((response) => setCarts(response.data)
+        ).catch((error) => console.log(error))
+    }
+    useEffect(() => {
+        getCarts()
+    }, []);
+
+
+    const handleReviewClick = (userid, productid, size) => {
         if (valueSize === '') {
             Toast.show({
                 type: 'error',
@@ -44,11 +79,12 @@ export default function Product({ route, navigation }) {
                 visibilityTime: 3000
             });
         } else {
-            navigation.navigate('Review', { id, size })
+            navigation.navigate('Review', { userid, productid, size })
         }
         setValueSize('')
     }
-    const handleAddToCart = (productID, quantity, size) => {
+
+    const handleAddToCart = (userId, size, carts) => {
         if (valueSize === '') {
             Toast.show({
                 type: 'error',
@@ -56,16 +92,101 @@ export default function Product({ route, navigation }) {
                 autoHide: true,
                 visibilityTime: 3000
             });
-        } else {
-            dispatch(CART({ productID, quantity, size }));
-            Toast.show({
-                type: 'success',
-                text1: 'Product Added Successfully',
-                autoHide: true,
-                visibilityTime: 3000
-            });
+            return; // Early exit if size is not selected
         }
-        setValueSize('')
+
+        const existingCartItem = carts.find(
+            (cart) => cart.product === productId && cart.size === size && cart.user === userId
+        );
+
+        if (existingCartItem) {
+            // Determine the stock based on the selected size
+            let stock;
+            if (size === 'Small') {
+                stock = data.stock_small_size;
+            } else if (size === 'Medium') {
+                stock = data.stock_medium_size;
+            } else if (size === 'Large') {
+                stock = data.stock_large_size;
+            }
+
+            // Check if the quantity in cart is less than stock
+            if (existingCartItem.quantity < stock) {
+                // Patch existing cart item quantity
+                axios.patch(`carts/${existingCartItem.id}/`, {
+                    quantity: existingCartItem.quantity + 1
+                })
+                    .then((response) => {
+                        Toast.show({
+                            type: 'success',
+                            text1: 'Product Quantity Updated Successfully',
+                            autoHide: true,
+                            visibilityTime: 3000
+                        });
+                    })
+                    .catch((error) => {
+                        console.error('Error patching cart item:', error);
+                        // Handle error appropriately, e.g., display an error message to the user
+                    });
+                getCarts()
+
+            } else {
+                Toast.show({
+                    type: 'error',
+                    text1: `stock limit of ${size} is reached`,
+                    autoHide: true,
+                    visibilityTime: 3000
+                });
+            }
+        } else {
+            // Create new cart item if no existing match
+            // Here, you should also check if the stock for the selected size is 0
+            let stock;
+            if (size === 'Small') {
+                stock = data.stock_small_size;
+            } else if (size === 'Medium') {
+                stock = data.stock_medium_size;
+            } else if (size === 'Large') {
+                stock = data.stock_large_size;
+            }
+
+            if (stock === 0) {
+                Toast.show({
+                    type: 'error',
+                    text1: `The stock for ${size} is currently unavailable`,
+                    autoHide: true,
+                    visibilityTime: 3000
+                });
+                return; // Early exit if stock is 0
+            }
+
+            axios.post('carts/', {
+                size: size,
+                quantity: 1,
+                user: userId,
+                product: productId
+            })
+                .then((response) => {
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Product Added Successfully',
+                        autoHide: true,
+                        visibilityTime: 3000
+                    });
+                })
+                .catch((error) => {
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Please select a size',
+                        autoHide: true,
+                        visibilityTime: 3000
+                    });
+                });
+            getCarts()
+
+        }
+
+        setValueSize('');
     };
 
     return (
@@ -74,12 +195,14 @@ export default function Product({ route, navigation }) {
             {data ? (
                 <View style={styles.container}>
                     <View >
-                        <ScrollView style={{ height: "85%" }}>
+                        <ScrollView style={{ height: "85%" }} refreshControl={
+                            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                        }>
                             <Card containerStyle={{ borderRadius: 20, margin: 50, marginTop: 20, marginBottom: 40 }} wrapperStyle={{}}>
                                 <CardImage
                                     style={{ width: "100%", height: 200, marginBottom: 10 }}
                                     resizeMode="contain"
-                                    source={{ uri: `${imagehttp}${data.image}` }}
+                                    source={{ uri: `${imagehttp}${data.images}` }}
                                 />
                             </Card>
                             <View>
@@ -107,7 +230,7 @@ export default function Product({ route, navigation }) {
                                 </ToggleButton.Row>
                             </View>
                             <View style={styles.seller}>
-                                <Text style={styles.sellerText}>Seller: {data.user}</Text>
+                                <Text style={styles.sellerText}>Seller: {data.user.first_name} {data.user.last_name}</Text>
                                 {/* <Button
                                     title="View Seller"
                                     loading={false}
@@ -126,6 +249,7 @@ export default function Product({ route, navigation }) {
                                     onPress={() => console.log(cart)}
                                 /> */}
                             </View>
+
                             {dataReview ? (
                                 <View style={styles.reviewContainer}>
                                     <Text style={styles.reviewTextBanner}>
@@ -135,7 +259,7 @@ export default function Product({ route, navigation }) {
                                         matchReview.map((review, index) => (
                                             <View key={index} style={styles.reviewComment}>
                                                 <Text style={styles.reviewCommentText}>
-                                                    Customer: {review.user}
+                                                    Customer: {review.user.first_name} {review.user.last_name}
                                                 </Text>
                                                 {/* <Rating
                                         fractions={0}
@@ -165,7 +289,7 @@ export default function Product({ route, navigation }) {
                                         type="star"
                                     /> */}
                                                 <Text >
-                                                    Variation: {review.color} - {review.size}
+                                                    Variation: {review.variation}
                                                 </Text>
                                                 <Card containerStyle={{ width: '50%', margin: 0, marginTop: 10 }} wrapperStyle={{}}>
                                                     <CardImage
@@ -204,38 +328,50 @@ export default function Product({ route, navigation }) {
                                 </Text>
                             )}
                         </ScrollView>
-                        <View style={styles.addcartcontainer}>
-                            <Button
-                                title="Add Review"
-                                loading={false}
-                                loadingProps={{ size: 'small', color: 'white' }}
-                                buttonStyle={{
-                                    backgroundColor: 'white',
-                                    borderRadius: 7,
-                                    borderColor: "black",
-                                    borderWidth: 2,
-                                    padding: 0,
-                                    paddingVertical: 5
-                                }}
-                                titleStyle={{ color: 'black' }}
-                                containerStyle={{
-                                }}
-                                onPress={() => handleReviewClick(data.id, valueSize)}
-                            />
-                            <Button
-                                title="Add to Cart"
-                                loading={false}
-                                loadingProps={{ size: 'small', color: 'white' }}
-                                buttonStyle={{
-                                    backgroundColor: 'black',
-                                    borderRadius: 7,
-                                }}
-                                titleStyle={{ fontWeight: 'bold' }}
-                                containerStyle={{
-                                }}
-                                onPress={() => handleAddToCart(data.id, 1, valueSize)}
-                            />
-                        </View>
+                        {userData ? (
+                            <View style={styles.addcartcontainer}>
+                                <Button
+                                    title="Add Review"
+                                    loading={false}
+                                    loadingProps={{ size: 'small', color: 'white' }}
+                                    buttonStyle={{
+                                        backgroundColor: 'white',
+                                        borderRadius: 7,
+                                        borderColor: "black",
+                                        borderWidth: 2,
+                                        padding: 0,
+                                        paddingVertical: 5
+                                    }}
+                                    titleStyle={{ color: 'black' }}
+                                    containerStyle={{
+                                    }}
+                                    onPress={() => handleReviewClick(userData.id, data.id, valueSize)}
+                                />
+                                {carts ? (
+                                    <Button
+                                        title="Add to Cart"
+                                        loading={false}
+                                        loadingProps={{ size: 'small', color: 'white' }}
+                                        buttonStyle={{
+                                            backgroundColor: 'black',
+                                            borderRadius: 7,
+                                        }}
+                                        titleStyle={{ fontWeight: 'bold' }}
+                                        containerStyle={{
+                                        }}
+                                        onPress={() => handleAddToCart(userData.id, valueSize, [carts])}
+                                    />
+                                ) : (
+                                    <Text>
+                                        Loading cart data...
+                                    </Text>
+                                )}
+                            </View>
+                        ) : (
+                            <Text>
+                                Loading user data...
+                            </Text>
+                        )}
                     </View >
 
                 </View >
@@ -305,7 +441,8 @@ const styles = StyleSheet.create({
         backgroundColor: "white",
         borderRadius: 10,
         padding: 10,
-        paddingHorizontal: 20
+        paddingHorizontal: 20,
+        marginTop: 20
     },
     reviewCommentText: {
         fontSize: 15,

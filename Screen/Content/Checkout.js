@@ -1,58 +1,40 @@
-import { StyleSheet, Text, View, Dimensions, TextInput, ScrollView } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { Entypo, Ionicons } from '@expo/vector-icons';
-import { Card } from "@rneui/base";
-import { Data } from '../../productstore';
+import { StyleSheet, Text, View, Dimensions, TextInput, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { Card } from '@rneui/base';
 import { Button } from '@rneui/themed';
-import { useSelector } from 'react-redux';
 import axios from '../../axios';
-import { imagehttp } from '../../axios';
 import { ToggleButton } from 'react-native-paper';
 import Toast from 'react-native-toast-message';
 
-const { width, height } = Dimensions.get('window')
+const { width, height } = Dimensions.get('window');
 
-export default function Checkout({ navigation }) {
+export default function Checkout({ navigation, route }) {
     const [payment, setPayment] = useState('');
-    const cart = useSelector((state) => state.cart.cart);
-    const cartID = cart.productID;
-    const [data, setData] = useState([]);
-    const [addressData, setAddressData] = useState({
-        address: '',
-        city: ''
-    })
-    let cartTotal = 0;
-    useEffect(() => {
-        axios.get('products/').then((response) => setData(response.data)
-        ).catch((error) => console.log(error))
-    }, []);
-    const filteredProducts = data.filter((product) =>
-        cart.some((cartItem) => cartItem.productID === product.id)
-    );
-    const combinedData = filteredProducts.map((product) => {
-        const matchingCartItem = cart.find((item) => item.productID === product.id);
-        const size = matchingCartItem.size
-        const quantity = matchingCartItem?.quantity || 0; // Use optional chaining for quantity
-        const productTotal = quantity * product.price;
-        cartTotal += productTotal; // Update cart total within the map function
+    const carts = route.params.carts;
+    const totalAmount = route.params.totalAmount;
+    const userId = route.params.userid;
+    const [addressData, setAddressData] = useState('');
+    const [ewallet, setEwallet] = React.useState(null);
+    const ewalletStore = ewallet ? ewallet : [];
 
-        return { ...product, quantity, productTotal, size }; // Add productTotal to combined data
-    });
-    const handleCheckout = () => {
-        if (addressData.address === '') {
+    const getEwallet = async () => {
+        await axios.get('ewallets/').then((response) => setEwallet(response.data)
+        ).catch((error) => console.log(error))
+    }
+    useEffect(() => {
+        getEwallet()
+    }, []);
+
+    const handleCheckout = async () => {
+        if (addressData === '') {
             Toast.show({
                 type: 'error',
                 text1: 'Please input an Address',
                 autoHide: true,
                 visibilityTime: 3000
             });
-        } else if (addressData.city === '') {
-            Toast.show({
-                type: 'error',
-                text1: 'Please input a City',
-                autoHide: true,
-                visibilityTime: 3000
-            });
+            return;
         } else if (payment === '') {
             Toast.show({
                 type: 'error',
@@ -60,6 +42,7 @@ export default function Checkout({ navigation }) {
                 autoHide: true,
                 visibilityTime: 3000
             });
+            return;
         } else if (payment === 'GCash') {
             Toast.show({
                 type: 'error',
@@ -67,19 +50,93 @@ export default function Checkout({ navigation }) {
                 autoHide: true,
                 visibilityTime: 3000
             });
-        } else {
+            return;
+        }
+
+        try {
+            const cartIds = carts.map(cart => cart.id);
+            const existingEwallet = ewalletStore.find(ewal => ewal.user === userId);
+            const numericAmount = parseFloat(totalAmount);
+
+            if (payment === 'EWallet') {
+                if (!existingEwallet || parseFloat(existingEwallet.balance) < numericAmount) {
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Insufficient E-Wallet Balance',
+                        text2: 'Please cash in to proceed',
+                        autoHide: true,
+                        visibilityTime: 3000
+                    });
+                    return;
+                }
+
+                const updatedBalance = parseFloat(existingEwallet.balance) - numericAmount;
+                await axios.patch(`ewallets/${existingEwallet.id}/`, {
+                    balance: updatedBalance
+                });
+
+                Toast.show({
+                    type: 'success',
+                    text1: 'Your E Wallet balance is deducted by the total amount',
+                    autoHide: true,
+                    visibilityTime: 3000
+                });
+            }
+
+            // Fetch the current stock of each product in the cart
+            const stockPromises = carts.map(cartItem =>
+                axios.get(`products/${cartItem.product}/`)
+            );
+            const stockResponses = await Promise.all(stockPromises);
+
+            // Deduct the quantity from the stock of each product size
+            const updateStockPromises = carts.map((cartItem, index) => {
+                const product = stockResponses[index].data;
+                const sizeStockKey = `stock_${cartItem.size.toLowerCase()}_size`; // Construct stock size attribute key
+                const currentStock = product[sizeStockKey];
+                const updatedStock = currentStock - cartItem.quantity;
+
+
+                // Construct the data object with the updated stock attribute
+                const updatedStockData = { [sizeStockKey]: updatedStock };
+
+                return axios.patch(`products/${cartItem.product}/`, updatedStockData);
+            });
+
+            // Update the stock of each product size
+            await Promise.all(updateStockPromises);
+
+
+            const response = await axios.post('orders/', {
+                cart: cartIds,
+                user: userId,
+                address: addressData,
+                total_amount: parseFloat(totalAmount),
+            });
+
+            console.log('Response:', response.data);
+
+            // Delete the carts after successful checkout
+            await Promise.all(carts.map(cartItem =>
+                axios.delete(`carts/${cartItem.id}/`)
+            ));
+
+
+            setTimeout(() => {
+                navigation.navigate('ProductList');
+            }, 0);
+        } catch (error) {
+            console.error('Error creating order:', error.response?.data || error.message);
+
             Toast.show({
-                type: 'success',
-                text1: 'Order Successful!!',
-                text2: 'Your E Wallet balance is deducted by the total amount',
+                type: 'error',
+                text1: 'Order Failed',
+                text2: error.response?.data?.message || 'An error occurred while creating the order',
                 autoHide: true,
                 visibilityTime: 5000
             });
-            setTimeout(() => {
-                navigation.navigate('ProductList')
-            }, 5000); // Delay of 3 seconds (adjust as needed)
         }
-    }
+    };
 
     return (
         <View style={styles.container}>
@@ -87,108 +144,68 @@ export default function Checkout({ navigation }) {
                 <Ionicons name="arrow-back" size={30} color="black" onPress={() => navigation.goBack()} />
             </View>
             <ScrollView>
-                <Card containerStyle={{ marginHorizontal: 50 }} wrapperStyle={{}}>
+                <Card containerStyle={{ marginHorizontal: 50 }}>
                     <Card.Title style={styles.cardTitle}>Order Summary</Card.Title>
                     <Card.Divider />
-                    <View
-                        style={{
-                            position: "relative",
-                            alignItems: "start"
-                        }}
-                    >
-                        {combinedData.length > 0 ? (
-                            combinedData.map((data, index) => (
-                                <View key={index} style={styles.ordercontainer}>
-                                    <Text>{data.quantity} * </Text>
-                                    <View style={styles.ordercontainer2}>
+                    <View style={styles.orderList}>
+                        {carts.length > 0 ? (
+                            carts.map((data, index) => (
+                                <View key={index} style={styles.orderContainer}>
+                                    <Text>{data.quantity} x </Text>
+                                    <View style={styles.orderDetails}>
                                         <Text>{data.product_name}</Text>
                                         <Text>{data.size}</Text>
-                                        <Text>₱ {data.productTotal.toFixed(2)}</Text>
+                                        <Text>₱ {data.price}</Text>
                                     </View>
                                 </View>
                             ))
                         ) : (
-                            <Text style={{ textAlign: 'center', marginVertical: 20 }}>
-                                Your cart is empty.
-                            </Text>
+                            <Text style={styles.emptyCartText}>Your cart is empty.</Text>
                         )}
                     </View>
                     <Card.Divider />
                     <View style={styles.totalContainer}>
-                        <Text style={styles.totalText}>
-                            Total
-                        </Text>
-                        <Text style={styles.totalText2}>
-                            ₱ {cartTotal.toFixed(2)}
-                        </Text>
+                        <Text style={styles.totalText}>Total</Text>
+                        <Text style={styles.totalTextAmount}>₱ {totalAmount}</Text>
                     </View>
                 </Card>
                 <View style={styles.shippingContainer}>
-                    <Text style={styles.shippingText}>
-                        Shipping Address
-                    </Text>
-                    <View
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            flexDirection: "row",
-                            borderWidth: 1,
-                            borderRadius: 10,
-                            paddingLeft: 10,
-                            paddingBottom: 5,
-                            paddingTop: 5,
-                            marginBottom: 10,
-                            backgroundColor: 'white',
-                            marginTop: 10
-                        }}
-                    >
-                        <TextInput style={{ marginLeft: 10, width: width * .80 }} placeholder='Address' value={addressData.address} onChangeText={(text) => setAddressData({ ...addressData, address: text })} />
+                    <Text style={styles.shippingText}>Shipping Address</Text>
+                    <View style={styles.addressInputContainer}>
+                        <TextInput
+                            style={styles.addressInput}
+                            placeholder='Address'
+                            value={addressData}
+                            onChangeText={setAddressData}
+                        />
                     </View>
-                    <View
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            flexDirection: "row",
-                            borderWidth: 1,
-                            borderRadius: 10,
-                            paddingLeft: 10,
-                            paddingBottom: 5,
-                            paddingTop: 5,
-                            marginBottom: 10,
-                            backgroundColor: 'white'
-                        }}
-                    >
-                        <TextInput style={{ marginLeft: 10, width: width * .80 }} placeholder='City' value={addressData.city} onChangeText={(text) => setAddressData({ ...addressData, city: text })} />
-                    </View>
-                    <Text style={styles.shippingText}>
-                        Make Payment
-                    </Text>
-                    <ToggleButton.Row onValueChange={value => setPayment(value)} value={payment}>
-                        <ToggleButton icon={() => <View><Text>💳 E-Wallet</Text></View>} value="EWallet" style={{ width: 150, borderWidth: 2, borderColor: 'black', marginTop: 10 }} />
-                        <ToggleButton icon={() => <View><Text>🇬 G-Cash</Text></View>} value="GCash" style={{ width: 150, borderWidth: 2, borderColor: 'black', marginTop: 10 }} />
+                    <Text style={styles.shippingText}>Make Payment</Text>
+                    <ToggleButton.Row onValueChange={setPayment} value={payment}>
+                        <ToggleButton
+                            icon={() => <Text>💳 E-Wallet</Text>}
+                            value="EWallet"
+                            style={styles.toggleButton}
+                        />
+                        <ToggleButton
+                            icon={() => <Text>🇬 G-Cash</Text>}
+                            value="GCash"
+                            style={styles.toggleButton}
+                        />
                     </ToggleButton.Row>
                 </View>
             </ScrollView>
             <View>
                 <Button
                     title="Checkout"
-                    loading={false}
-                    loadingProps={{ size: 'small', color: 'white' }}
-                    buttonStyle={{
-                        backgroundColor: 'black',
-                        borderRadius: 7,
-                        paddingVertical: 10,
-                    }}
-                    titleStyle={{ fontWeight: 'bold', fontSize: 20 }}
-                    containerStyle={{
-                        margin: 15,
-                    }}
+                    buttonStyle={styles.checkoutButton}
+                    titleStyle={styles.checkoutButtonText}
+                    containerStyle={styles.checkoutButtonContainer}
                     onPress={handleCheckout}
                 />
             </View>
             <Toast />
         </View>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
@@ -197,42 +214,75 @@ const styles = StyleSheet.create({
         height: height,
     },
     header: {
-        marginHorizontal: 5
+        marginHorizontal: 5,
     },
     cardTitle: {
-        fontSize: 22
+        fontSize: 22,
     },
-    ordercontainer: {
-        flexDirection: 'row',
-        width: width * .40,
-        marginBottom: 10
+    orderList: {
+        alignItems: 'flex-start',
     },
-    ordercontainer2: {
+    orderContainer: {
         flexDirection: 'row',
-        gap: 10
+        marginBottom: 10,
+    },
+    orderDetails: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+    emptyCartText: {
+        textAlign: 'center',
+        marginVertical: 20,
     },
     totalContainer: {
         flexDirection: 'row',
-        gap: 130,
+        justifyContent: 'space-between',
+        paddingHorizontal: 10,
     },
     totalText: {
         fontSize: 15,
-        marginLeft: 10
     },
-    totalText2: {
+    totalTextAmount: {
         fontSize: 18,
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     },
     shippingContainer: {
-        padding: 20
+        padding: 20,
     },
     shippingText: {
         fontSize: 22,
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     },
-    shippingInput: {
+    addressInputContainer: {
         flexDirection: 'row',
-        gap: 10,
-        marginVertical: 10,
-    }
-})
+        alignItems: 'center',
+        borderWidth: 1,
+        borderRadius: 10,
+        padding: 5,
+        backgroundColor: 'white',
+        marginTop: 10,
+        marginBottom: 10,
+    },
+    addressInput: {
+        marginLeft: 10,
+        width: width * 0.8,
+    },
+    toggleButton: {
+        width: 150,
+        borderWidth: 2,
+        borderColor: 'black',
+        marginTop: 10,
+    },
+    checkoutButton: {
+        backgroundColor: 'black',
+        borderRadius: 7,
+        paddingVertical: 10,
+    },
+    checkoutButtonText: {
+        fontWeight: 'bold',
+        fontSize: 20,
+    },
+    checkoutButtonContainer: {
+        margin: 15,
+    },
+});
