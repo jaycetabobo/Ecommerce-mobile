@@ -116,15 +116,10 @@ export default function Checkout({ navigation, route }) {
 
             console.log('Response:', response.data);
 
-            // Delete the carts after successful checkout
-            await Promise.all(carts.map(cartItem =>
-                axios.delete(`carts/${cartItem.id}/`)
-            ));
-
 
             setTimeout(() => {
                 navigation.navigate('ProductList');
-            }, 0);
+            }, 3000);
         } catch (error) {
             console.error('Error creating order:', error.response?.data || error.message);
 
