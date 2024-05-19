@@ -131,6 +131,8 @@ export default function Checkout({ navigation, route }) {
                 visibilityTime: 5000
             });
         }
+        setPayment('')
+        setAddressData('')
     };
 
     return (

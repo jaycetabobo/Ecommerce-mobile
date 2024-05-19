@@ -89,6 +89,7 @@ export default function Ewallet2({ navigation, route }) {
                     // Handle error appropriately, e.g., display an error message to the user
                 });
         }
+        setCard({ ...card, cardId: '', name: '', pin: '' })
     };
 
     return (

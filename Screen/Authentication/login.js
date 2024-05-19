@@ -24,9 +24,36 @@ export default function Login({ navigation, route }) {
     const [loginData, setLoginData] = useState({
         email: '',
         password: ''
-    })
+    });
     const dispatch = useDispatch();
     const [isLoading, setIsLoading] = useState(false);
+    const [attemptCount, setAttemptCount] = useState(0);
+    const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+    const [remainingTime, setRemainingTime] = useState(30);
+
+    useEffect(() => {
+        let timer;
+        if (attemptCount >= 3) {
+            setIsButtonDisabled(true);
+            timer = setInterval(() => {
+                setRemainingTime(prevTime => {
+                    if (prevTime <= 1) {
+                        clearInterval(timer);
+                        setAttemptCount(0);
+                        setIsButtonDisabled(false);
+                        return 30;
+                    }
+                    return prevTime - 1;
+                });
+            }, 1000);
+        }
+
+        return () => {
+            if (timer) {
+                clearInterval(timer);
+            }
+        };
+    }, [attemptCount]);
 
     const handleLoginSubmit = async () => {
         Keyboard.dismiss();
@@ -43,47 +70,30 @@ export default function Login({ navigation, route }) {
                 });
                 setIsLoading(false);
             }
-            setLoginData({ ...loginData, email: '', password: '' })
+            setLoginData({ ...loginData, email: '', password: '' });
         }).catch(() => {
             Toast.show({
                 type: 'error',
-                text1: 'Login Failed!! please Check you email and password',
+                text1: 'Login Failed!! please Check your email and password',
                 autoHide: true,
                 visibilityTime: 3000
             });
             setIsLoading(false);
-        })
+            setAttemptCount(attemptCount + 1);
+        });
     };
-
-
-    // const fetchAPI = async () => {
-    //   try {
-    //     const res = await axios.get('auth/users/me/', {
-    //       headers: {
-    //         'Authorization': `Token ${tokens}`
-    //       }
-    //     })
-    //     console.log(res.data)
-    //   } catch (error) {
-    //     console.log(error)
-    //   }
-    // }
-    // useEffect(() => {
-    //   fetchAPI();
-    // }, []);
 
     return (
         <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); }}>
             <View style={{ flex: 1, backgroundColor: "white" }}>
-                <View style={{ display: "flex", alignItems: "center", marginTop: 100 }}>
-                    <Text style={{ fontSize: 40, marginTop: 10, fontWeight: "bold" }}>Login</Text>
-                    {/* {
-              users.map((obj, index) => <View key={index}>
-                <Text>username: {obj.username} </Text> 
-                <Text>password: {obj.password} </Text>
-              </View>)
-            } */}
-                    <View style={{ width: "80%", marginTop: 80 }}>
+                <View style={{ display: "flex", alignItems: "center", marginTop: 50 }}>
+                    {isButtonDisabled && (
+                        <Text style={{ color: 'red', marginBottom: 20 }}>
+                            Too many failed attempts. Please wait {remainingTime} seconds.
+                        </Text>
+                    )}
+                    <Text style={{ fontSize: 40, marginTop: 30, fontWeight: "bold" }}>Login</Text>
+                    <View style={{ width: "80%", marginTop: 50 }}>
                         <Text style={{ marginBottom: 5 }}>Email:</Text>
                         <View
                             style={{
@@ -131,7 +141,7 @@ export default function Login({ navigation, route }) {
                     </View>
                     <Button
                         title="Login"
-                        loading={false}
+                        loading={isLoading}
                         loadingProps={{ size: 'small', color: 'white' }}
                         buttonStyle={{
                             backgroundColor: 'black',
@@ -142,6 +152,7 @@ export default function Login({ navigation, route }) {
                             marginBottom: 20
                         }}
                         onPress={handleLoginSubmit}
+                        disabled={isButtonDisabled}
                     />
 
                     <View
@@ -182,7 +193,7 @@ export default function Login({ navigation, route }) {
                         <Text style={styles.createAccountButtonText}>Create an Account</Text>
                     </TouchableOpacity>
                 </View>
-                {isLoading && (
+                {/* {isLoading && (
                     <View style={{
                         position: 'absolute',
                         top: 0,
@@ -197,7 +208,7 @@ export default function Login({ navigation, route }) {
                         <ActivityIndicator size="large" color='black' />
                         <Text style={{ fontSize: 20, marginVertical: 20 }}>Logging In</Text>
                     </View>
-                )}
+                )} */}
                 <Toast />
             </View>
         </TouchableWithoutFeedback>

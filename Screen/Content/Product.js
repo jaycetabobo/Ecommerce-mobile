@@ -20,6 +20,7 @@ export default function Product({ route, navigation }) {
     const [dataReview, setDataReview] = useState(null);
     const [carts, setCarts] = useState(null)
     const productId = route.params.id;
+    const userID = userData ? userData.id : '';
     // const matchProduct = data.filter(data => data.id === productId);
     const matchReview = dataReview ? dataReview.filter(review => review.product.id === productId) : [];
     const [valueSize, setValueSize] = useState('');
@@ -36,6 +37,13 @@ export default function Product({ route, navigation }) {
             setRefreshing(false);
         }, 1000);
     }, []);
+    const getCarts = async () => {
+        await axios.get('carts/').then((response) => setCarts(response.data)
+        ).catch((error) => console.log(error))
+    }
+    useEffect(() => {
+        getCarts()
+    }, []);
 
     useEffect(() => {
         axios.get('auth/users/me/', {
@@ -51,6 +59,7 @@ export default function Product({ route, navigation }) {
         )
     }, [Tokens]);
 
+
     useEffect(() => {
         axios.get(`products/${productId}`).then((response) => setData(response.data)
         ).catch((error) => console.log(error))
@@ -61,13 +70,6 @@ export default function Product({ route, navigation }) {
         ).catch((error) => console.log(error))
     }, []);
 
-    const getCarts = async () => {
-        await axios.get('carts/').then((response) => setCarts(response.data)
-        ).catch((error) => console.log(error))
-    }
-    useEffect(() => {
-        getCarts()
-    }, []);
 
 
     const handleReviewClick = (userid, productid, size) => {
@@ -85,6 +87,7 @@ export default function Product({ route, navigation }) {
     }
 
     const handleAddToCart = (userId, size, carts) => {
+        getCarts()
         if (valueSize === '') {
             Toast.show({
                 type: 'error',
@@ -95,9 +98,11 @@ export default function Product({ route, navigation }) {
             return; // Early exit if size is not selected
         }
 
+
         const existingCartItem = carts.find(
-            (cart) => cart.product === productId && cart.size === size && cart.user === userId
+            cart => cart.product === productId && cart.size === size && cart.user === userID
         );
+
 
         if (existingCartItem) {
             // Determine the stock based on the selected size
@@ -123,13 +128,12 @@ export default function Product({ route, navigation }) {
                             autoHide: true,
                             visibilityTime: 3000
                         });
+
                     })
                     .catch((error) => {
                         console.error('Error patching cart item:', error);
                         // Handle error appropriately, e.g., display an error message to the user
                     });
-                getCarts()
-
             } else {
                 Toast.show({
                     type: 'error',
@@ -182,7 +186,6 @@ export default function Product({ route, navigation }) {
                         visibilityTime: 3000
                     });
                 });
-            getCarts()
 
         }
 
