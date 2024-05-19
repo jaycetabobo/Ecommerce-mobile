@@ -205,7 +205,7 @@ export default function Product({ route, navigation }) {
                                 <CardImage
                                     style={{ width: "100%", height: 200, marginBottom: 10 }}
                                     resizeMode="contain"
-                                    source={{ uri: `${imagehttp}${data.images}` }}
+                                    source={{ uri: `${data.image}` }}
                                 />
                             </Card>
                             <View>
@@ -298,7 +298,7 @@ export default function Product({ route, navigation }) {
                                                     <CardImage
                                                         style={{ height: 90, marginBottom: 10, }}
                                                         resizeMode="contain"
-                                                        source={{ uri: `${imagehttp}${data.image}` }}
+                                                        source={{ uri: `${data.image}` }}
                                                     />
                                                 </Card>
                                                 <Text style={styles.reviewCommentText2} >

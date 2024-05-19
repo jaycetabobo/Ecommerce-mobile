@@ -139,11 +139,11 @@ export default function Cart({ navigation }) {
                                                 <View>
                                                     <Card containerStyle={{ width: 150, margin: 0, borderRadius: 10 }} wrapperStyle={{}}>
                                                         {/* Uncomment the following lines if you want to show the product image */}
-                                                        {/* <Card.Image
-                                                          style={{ height: 100 }}
-                                                          resizeMode="contain"
-                                                          source={{ uri: `${imagehttp}${data.image}` }}
-                                                        /> */}
+                                                        <Card.Image
+                                                            style={{ height: 100 }}
+                                                            resizeMode="contain"
+                                                            source={{ uri: `${productData.image}` }}
+                                                        />
                                                     </Card>
                                                 </View>
                                                 <View style={styles.cartTextContainer}>

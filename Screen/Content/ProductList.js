@@ -161,7 +161,7 @@ export default function ProductList({ navigation }) {
                                     <CardImage
                                         style={{ width: "100%", height: 200, marginBottom: 10 }}
                                         resizeMode="contain"
-                                        source={{ uri: `${imagehttp}${data.image}` }}
+                                        source={{ uri: `${data.image}` }}
                                         onPress={() => handleProductClick(data.id)}
                                     />
                                     <View>

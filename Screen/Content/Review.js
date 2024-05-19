@@ -98,7 +98,7 @@ export default function Review({ route, navigation }) {
                             <CardImage
                                 style={{ height: 30, }}
                                 resizeMode="contain"
-                                source={{ uri: `${imagehttp}${data.image}` }}
+                                source={{ uri: `${data.image}` }}
                             />
 
                         </Card>
