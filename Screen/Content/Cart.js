@@ -22,13 +22,15 @@ export default function Cart({ navigation }) {
             headers: { 'Authorization': `Token ${Tokens}` }
         }).then(response => setUserData(response.data))
             .catch(error => console.log(error));
-    }, [Tokens]);
 
-    useEffect(() => {
         axios.get('products/')
             .then(response => setData(response.data))
             .catch(error => console.log(error));
-    }, []);
+
+        getCarts();
+
+
+    }, [Tokens]);
 
     const getCarts = () => {
         axios.get('carts/')
@@ -36,14 +38,11 @@ export default function Cart({ navigation }) {
             .catch(error => console.log(error));
     };
 
-    useEffect(() => {
-        getCarts();
-    }, []);
-
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
         setTimeout(() => {
             getCarts();
+            console.log(userid)
             setRefreshing(false);
         }, 1000);
     }, []);
@@ -111,7 +110,17 @@ export default function Cart({ navigation }) {
     const filteredCarts = carts ? carts.filter(cart => cart.user === userid) : [];
 
     const handleCheckoutCart = (carts, totalAmount) => {
-        navigation.navigate('Checkout', { carts, totalAmount, userid });
+        if (filteredCarts.length === 0) {
+            Toast.show({
+                type: 'error',
+                text1: 'Your cart is empty. Add items to the cart before checkout.',
+                autoHide: true,
+                visibilityTime: 3000
+            });
+        } else {
+            navigation.navigate('Checkout', { carts, totalAmount, userid });
+        }
+
     };
 
     return (

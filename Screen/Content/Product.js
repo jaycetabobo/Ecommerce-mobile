@@ -43,9 +43,7 @@ export default function Product({ route, navigation }) {
     }
     useEffect(() => {
         getCarts()
-    }, []);
 
-    useEffect(() => {
         axios.get('auth/users/me/', {
             headers: {
                 'Authorization': `Token ${Tokens}`
@@ -57,20 +55,13 @@ export default function Product({ route, navigation }) {
             console.log(error)
 
         )
-    }, [Tokens]);
 
-
-    useEffect(() => {
         axios.get(`products/${productId}`).then((response) => setData(response.data)
         ).catch((error) => console.log(error))
-    }, []);
 
-    useEffect(() => {
         axios.get('reviews/').then((response) => setDataReview(response.data)
         ).catch((error) => console.log(error))
-    }, []);
-
-
+    }, [Tokens]);
 
     const handleReviewClick = (userid, productid, size) => {
         if (valueSize === '') {
@@ -195,7 +186,7 @@ export default function Product({ route, navigation }) {
     return (
         <View>
             <HeaderApp onPress={() => navigation.navigate('ProductList')} icon='arrow-back' icon2='shopping-cart' onPressRight={() => navigation.navigate('Cart')} />
-            {data ? (
+            {data && dataReview && carts && userData ? (
                 <View style={styles.container}>
                     <View >
                         <ScrollView style={{ height: "85%" }} refreshControl={
@@ -233,7 +224,7 @@ export default function Product({ route, navigation }) {
                                 </ToggleButton.Row>
                             </View>
                             <View style={styles.seller}>
-                                <Text style={styles.sellerText}>Seller: {data.user.first_name} {data.user.last_name}</Text>
+                                <Text style={styles.sellerText}>Seller: {data.user}</Text>
                                 {/* <Button
                                     title="View Seller"
                                     loading={false}
@@ -253,18 +244,17 @@ export default function Product({ route, navigation }) {
                                 /> */}
                             </View>
 
-                            {dataReview ? (
-                                <View style={styles.reviewContainer}>
-                                    <Text style={styles.reviewTextBanner}>
-                                        Product Reviews
-                                    </Text>
-                                    {matchReview.length > 0 ? (
-                                        matchReview.map((review, index) => (
-                                            <View key={index} style={styles.reviewComment}>
-                                                <Text style={styles.reviewCommentText}>
-                                                    Customer: {review.user.first_name} {review.user.last_name}
-                                                </Text>
-                                                {/* <Rating
+                            <View style={styles.reviewContainer}>
+                                <Text style={styles.reviewTextBanner}>
+                                    Product Reviews
+                                </Text>
+                                {matchReview.length > 0 ? (
+                                    matchReview.map((review, index) => (
+                                        <View key={index} style={styles.reviewComment}>
+                                            <Text style={styles.reviewCommentText}>
+                                                Customer: {review.user.first_name} {review.user.last_name}
+                                            </Text>
+                                            {/* <Rating
                                         fractions={0}
                                         imageSize={70}
                                         minValue={0}
@@ -291,96 +281,84 @@ export default function Product({ route, navigation }) {
                                         style={{}}
                                         type="star"
                                     /> */}
-                                                <Text >
-                                                    Variation: {review.variation}
-                                                </Text>
-                                                <Card containerStyle={{ width: '50%', margin: 0, marginTop: 10 }} wrapperStyle={{}}>
-                                                    <CardImage
-                                                        style={{ height: 90, marginBottom: 10, }}
-                                                        resizeMode="contain"
-                                                        source={{ uri: `${data.image}` }}
-                                                    />
-                                                </Card>
-                                                <Text style={styles.reviewCommentText2} >
-                                                    Product Quality: {review.productQuality}
-                                                </Text>
-                                                <Text style={styles.reviewCommentText2}>
-                                                    Performance: {review.performance}
-                                                </Text>
-                                                <Text style={styles.reviewCommentText2}>
-                                                    Best Features: {review.bestFeatures}
-                                                </Text>
-                                                <Text style={styles.reviewCommentText2}>
-                                                    Comments:
-                                                </Text>
-                                                <Text>
-                                                    {review.review}
-                                                </Text>
-                                                <Text style={styles.reviewCommentText2}>
-                                                    {review.date} {review.time}
-                                                </Text>
-                                            </View>
-                                        ))
-                                    ) : (
-                                        <Text >No reviews available for this product.</Text>
-                                    )}
-                                </View>
-                            ) : (
-                                <Text>
-                                    Loading review data...
-                                </Text>
-                            )}
-                        </ScrollView>
-                        {userData ? (
-                            <View style={styles.addcartcontainer}>
-                                <Button
-                                    title="Add Review"
-                                    loading={false}
-                                    loadingProps={{ size: 'small', color: 'white' }}
-                                    buttonStyle={{
-                                        backgroundColor: 'white',
-                                        borderRadius: 7,
-                                        borderColor: "black",
-                                        borderWidth: 2,
-                                        padding: 0,
-                                        paddingVertical: 5
-                                    }}
-                                    titleStyle={{ color: 'black' }}
-                                    containerStyle={{
-                                    }}
-                                    onPress={() => handleReviewClick(userData.id, data.id, valueSize)}
-                                />
-                                {carts ? (
-                                    <Button
-                                        title="Add to Cart"
-                                        loading={false}
-                                        loadingProps={{ size: 'small', color: 'white' }}
-                                        buttonStyle={{
-                                            backgroundColor: 'black',
-                                            borderRadius: 7,
-                                        }}
-                                        titleStyle={{ fontWeight: 'bold' }}
-                                        containerStyle={{
-                                        }}
-                                        onPress={() => handleAddToCart(userData.id, valueSize, [carts])}
-                                    />
+                                            <Text >
+                                                Variation: {review.variation}
+                                            </Text>
+                                            <Card containerStyle={{ width: '50%', margin: 0, marginTop: 10 }} wrapperStyle={{}}>
+                                                <CardImage
+                                                    style={{ height: 90, marginBottom: 10, }}
+                                                    resizeMode="contain"
+                                                    source={{ uri: `${data.image}` }}
+                                                />
+                                            </Card>
+                                            <Text style={styles.reviewCommentText2} >
+                                                Product Quality: {review.productQuality}
+                                            </Text>
+                                            <Text style={styles.reviewCommentText2}>
+                                                Performance: {review.performance}
+                                            </Text>
+                                            <Text style={styles.reviewCommentText2}>
+                                                Best Features: {review.bestFeatures}
+                                            </Text>
+                                            <Text style={styles.reviewCommentText2}>
+                                                Comments:
+                                            </Text>
+                                            <Text>
+                                                {review.review}
+                                            </Text>
+                                            <Text style={styles.reviewCommentText2}>
+                                                {review.date} {review.time}
+                                            </Text>
+                                        </View>
+                                    ))
                                 ) : (
-                                    <Text>
-                                        Loading cart data...
-                                    </Text>
+                                    <Text >No reviews available for this product.</Text>
                                 )}
                             </View>
-                        ) : (
-                            <Text>
-                                Loading user data...
-                            </Text>
-                        )}
+
+                        </ScrollView>
+
+                        <View style={styles.addcartcontainer}>
+                            <Button
+                                title="Add Review"
+                                loading={false}
+                                loadingProps={{ size: 'small', color: 'white' }}
+                                buttonStyle={{
+                                    backgroundColor: 'white',
+                                    borderRadius: 7,
+                                    borderColor: "black",
+                                    borderWidth: 2,
+                                    padding: 0,
+                                    paddingVertical: 5
+                                }}
+                                titleStyle={{ color: 'black' }}
+                                containerStyle={{
+                                }}
+                                onPress={() => handleReviewClick(userID, data.id, valueSize)}
+                            />
+
+                            <Button
+                                title="Add to Cart"
+                                loading={false}
+                                loadingProps={{ size: 'small', color: 'white' }}
+                                buttonStyle={{
+                                    backgroundColor: 'black',
+                                    borderRadius: 7,
+                                }}
+                                titleStyle={{ fontWeight: 'bold' }}
+                                containerStyle={{
+                                }}
+                                onPress={() => handleAddToCart(userID, valueSize, [carts])}
+                            />
+
+                        </View>
+
                     </View >
 
                 </View >
             ) : (
                 <Text>
-                    Loading product data...
+                    Loading data...
                 </Text>
             )}
             <Toast />

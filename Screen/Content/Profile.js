@@ -50,6 +50,11 @@ export default function Profile({ navigation }) {
     const handleLogoutSubmit = async () => {
         // console.log(orders)
         dispatch(LOGOUT())
+        axios.post('auth/token/logout/', {
+            headers: {
+                'Authorization': `Token ${Tokens}`
+            }
+        })
     }
 
 
@@ -72,7 +77,7 @@ export default function Profile({ navigation }) {
                             <Image
                                 style={{ width: "100%", height: 100 }}
                                 resizeMode="contain"
-                                source={require("../../assets/2.png")}
+                                source={require("../../assets/customer.png")}
                             />
                             <Text style={styles.profileText}>{data.first_name} {data.last_name}</Text>
                             <Text></Text>

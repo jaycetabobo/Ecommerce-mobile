@@ -71,7 +71,16 @@ export default function Ewallet({ navigation }) {
                             <Text style={styles.text}>{filteredbalance[0].balance}</Text>
                         </View>
                     ) : (
-                        <Text>loading balance</Text>
+                        <View
+                            style={{
+                                position: "relative",
+                                alignItems: "center"
+                            }}
+                        >
+                            <AntDesign name="wallet" size={130} color="black" />
+                            <Text style={styles.text}>Balance:</Text>
+                            <Text style={styles.text}>0</Text>
+                        </View>
                     )}
                 </Card>
                 <View style={styles.pricetitle}>

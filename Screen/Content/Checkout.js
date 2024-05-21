@@ -58,30 +58,6 @@ export default function Checkout({ navigation, route }) {
             const existingEwallet = ewalletStore.find(ewal => ewal.user === userId);
             const numericAmount = parseFloat(totalAmount);
 
-            if (payment === 'EWallet') {
-                if (!existingEwallet || parseFloat(existingEwallet.balance) < numericAmount) {
-                    Toast.show({
-                        type: 'error',
-                        text1: 'Insufficient E-Wallet Balance',
-                        text2: 'Please cash in to proceed',
-                        autoHide: true,
-                        visibilityTime: 3000
-                    });
-                    return;
-                }
-
-                const updatedBalance = parseFloat(existingEwallet.balance) - numericAmount;
-                await axios.patch(`ewallets/${existingEwallet.id}/`, {
-                    balance: updatedBalance
-                });
-
-                Toast.show({
-                    type: 'success',
-                    text1: 'Your E Wallet balance is deducted by the total amount',
-                    autoHide: true,
-                    visibilityTime: 3000
-                });
-            }
 
             // Fetch the current stock of each product in the cart
             const stockPromises = carts.map(cartItem =>
@@ -89,37 +65,87 @@ export default function Checkout({ navigation, route }) {
             );
             const stockResponses = await Promise.all(stockPromises);
 
-            // Deduct the quantity from the stock of each product size
-            const updateStockPromises = carts.map((cartItem, index) => {
-                const product = stockResponses[index].data;
+            // Validate stock availability
+            for (let i = 0; i < carts.length; i++) {
+                const cartItem = carts[i];
+                const product = stockResponses[i].data;
                 const sizeStockKey = `stock_${cartItem.size.toLowerCase()}_size`; // Construct stock size attribute key
                 const currentStock = product[sizeStockKey];
-                const updatedStock = currentStock - cartItem.quantity;
+
+                if (currentStock < cartItem.quantity) {
+                    Toast.show({
+                        type: 'error',
+                        text1: `Insufficient stock for ${cartItem.product_name} (${cartItem.size})`,
+                        text2: `Available stock: ${currentStock}, required: ${cartItem.quantity}`,
+                        autoHide: true,
+                        visibilityTime: 3000
+                    });
+                } else {
+                    if (payment === 'EWallet') {
+                        if (!existingEwallet || parseFloat(existingEwallet.balance) < numericAmount) {
+                            Toast.show({
+                                type: 'error',
+                                text1: 'Insufficient E-Wallet Balance',
+                                text2: 'Please cash in to proceed',
+                                autoHide: true,
+                                visibilityTime: 3000
+                            });
+                            return;
+                        }
+
+                        const updatedBalance = parseFloat(existingEwallet.balance) - numericAmount;
+                        await axios.patch(`ewallets/${existingEwallet.id}/`, {
+                            balance: updatedBalance
+                        });
+
+                        Toast.show({
+                            type: 'success',
+                            text1: 'Your E Wallet balance is deducted by the total amount',
+                            autoHide: true,
+                            visibilityTime: 2000
+                        });
+                    }
+
+                    // Deduct the quantity from the stock of each product size
+                    const updateStockPromises = carts.map((cartItem, index) => {
+                        const product = stockResponses[index].data;
+                        const sizeStockKey = `stock_${cartItem.size.toLowerCase()}_size`; // Construct stock size attribute key
+                        const currentStock = product[sizeStockKey];
+                        const updatedStock = currentStock - cartItem.quantity;
+
+                        // Construct the data object with the updated stock attribute
+                        const updatedStockData = { [sizeStockKey]: updatedStock };
+
+                        return axios.patch(`products/${cartItem.product}/`, updatedStockData);
+                    });
+
+                    // Update the stock of each product size
+                    await Promise.all(updateStockPromises);
+
+                    const response = await axios.post('orders/', {
+                        cart: cartIds,
+                        user: userId,
+                        address: addressData,
+                        total_amount: parseFloat(totalAmount),
+                    });
+
+                    console.log('Response:', response.data);
+
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Order Placed Successfully',
+                        autoHide: true,
+                        visibilityTime: 3000
+                    });
+
+                    setTimeout(() => {
+                        navigation.navigate('ProductList');
+                    }, 3500);
+
+                }
+            }
 
 
-                // Construct the data object with the updated stock attribute
-                const updatedStockData = { [sizeStockKey]: updatedStock };
-
-                return axios.patch(`products/${cartItem.product}/`, updatedStockData);
-            });
-
-            // Update the stock of each product size
-            await Promise.all(updateStockPromises);
-
-
-            const response = await axios.post('orders/', {
-                cart: cartIds,
-                user: userId,
-                address: addressData,
-                total_amount: parseFloat(totalAmount),
-            });
-
-            console.log('Response:', response.data);
-
-
-            setTimeout(() => {
-                navigation.navigate('ProductList');
-            }, 3000);
         } catch (error) {
             console.error('Error creating order:', error.response?.data || error.message);
 
@@ -134,6 +160,7 @@ export default function Checkout({ navigation, route }) {
         setPayment('')
         setAddressData('')
     };
+
 
     return (
         <View style={styles.container}>

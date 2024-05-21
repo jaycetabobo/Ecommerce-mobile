@@ -1,7 +1,7 @@
 import axios from 'axios'
 
-axios.defaults.baseURL = 'http://192.168.254.101:8000/api/v1/'
+axios.defaults.baseURL = 'https://buynabais.onrender.com/api/v1/'
 
-export const imagehttp = 'http://192.168.254.101:8000'
+export const imagehttp = 'https://buynabais.onrender.com'
 
 export default axios;

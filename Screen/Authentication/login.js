@@ -185,11 +185,11 @@ export default function Login({ navigation, route }) {
                     </View>
                     <Text style={{ marginTop: 30, fontSize: 15, marginBottom: 25 }}>
                         Forgot your password?
-                        <TouchableOpacity onPress={() => navigation.navigate('Forgotpage1')}>
+                        <TouchableOpacity >
                             <Text style={{ color: "#38B6FF" }}> Click Here.</Text>
                         </TouchableOpacity>
                     </Text>
-                    <TouchableOpacity style={styles.createAccountButton} >
+                    <TouchableOpacity style={styles.createAccountButton} onPress={() => navigation.navigate('Signup')}>
                         <Text style={styles.createAccountButtonText}>Create an Account</Text>
                     </TouchableOpacity>
                 </View>
